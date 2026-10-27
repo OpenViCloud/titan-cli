@@ -71,10 +71,10 @@ func newList(deps *command.Deps) *cobra.Command {
 			}
 			rows := [][]string{}
 			for _, vm := range vms {
-				rows = append(rows, []string{output.Text(vm.Name), output.Text(vm.Id), output.Text(vm.ZoneId),
+				rows = append(rows, []string{output.Text(vm.Name), output.Text(vm.Id), output.Text(vm.ClusterId),
 					output.Word(vm.CurrentState), output.Word(vm.Transition), output.Text(vm.IpAddress)})
 			}
-			return deps.Printer.Table([]string{"NAME", "ID", "ZONE", "STATE", "WAITING FOR", "IPV4"}, rows, vms)
+			return deps.Printer.Table([]string{"NAME", "ID", "CLUSTER", "STATE", "WAITING FOR", "IPV4"}, rows, vms)
 		},
 	}
 }
@@ -103,12 +103,12 @@ func newGet(deps *command.Deps) *cobra.Command {
 }
 
 func newCreate(deps *command.Deps) *cobra.Command {
-	var zone, network, template, size string
+	var cluster, network, template, size string
 	var sshKeys []string
 	var diskSizeGb int32
 	var flags waitFlags
 	create := &cobra.Command{
-		Use:   "create <name> --zone <zone> --network <network> --template <template> --size <size>",
+		Use:   "create <name> --cluster <cluster> --network <network> --template <template> --size <size>",
 		Short: "Create a VM",
 		Long: "Create a VM. Network, template, size and SSH keys are given by name or id: see `openvicloud template list`,\n" +
 			"`openvicloud size list`, `openvicloud ssh-key list`. Without an SSH key you cannot log in to the VM.",
@@ -119,12 +119,12 @@ func newCreate(deps *command.Deps) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			body := api.CreateVmCommand{Name: args[0], ZoneId: zone}
+			body := api.CreateVmCommand{Name: args[0], ClusterId: cluster}
 			body.NetworkId, err = resolveNetwork(ctx, client, network)
 			if err != nil {
 				return err
 			}
-			body.TemplateId, err = resolveTemplate(ctx, client, zone, template)
+			body.TemplateId, err = resolveTemplate(ctx, client, cluster, template)
 			if err != nil {
 				return err
 			}
@@ -163,13 +163,13 @@ func newCreate(deps *command.Deps) *cobra.Command {
 			return printVm(deps, vm)
 		},
 	}
-	create.Flags().StringVar(&zone, "zone", "", "zone id (see `openvicloud zone list`)")
-	create.Flags().StringVar(&network, "network", "", "network name or id, in that zone")
+	create.Flags().StringVar(&cluster, "cluster", "", "cluster id (see `openvicloud cluster list`)")
+	create.Flags().StringVar(&network, "network", "", "network name or id, in that cluster")
 	create.Flags().StringVar(&template, "template", "", "template name or id (see `openvicloud template list`)")
 	create.Flags().StringVar(&size, "size", "", "size name or id (see `openvicloud size list`)")
 	create.Flags().StringArrayVar(&sshKeys, "ssh-key", nil, "SSH key name or id to install; repeat for several keys")
 	create.Flags().Int32Var(&diskSizeGb, "disk-size", 0, "disk size in GB (default: the template's)")
-	for _, name := range []string{"zone", "network", "template", "size"} {
+	for _, name := range []string{"cluster", "network", "template", "size"} {
 		create.MarkFlagRequired(name)
 	}
 	flags.add(create)
@@ -374,7 +374,7 @@ func printVm(deps *command.Deps, vm *api.VmQueryResult) error {
 	fields := []output.Field{
 		{Name: "ID", Value: output.Text(vm.Id)},
 		{Name: "Name", Value: output.Text(vm.Name)},
-		{Name: "Zone", Value: output.Text(vm.ZoneId)},
+		{Name: "Cluster", Value: output.Text(vm.ClusterId)},
 		{Name: "State", Value: output.Word(vm.CurrentState)},
 		{Name: "Requested state", Value: output.Word(vm.DesiredState)},
 		{Name: "Waiting for", Value: output.Word(vm.Transition)},
@@ -411,8 +411,8 @@ func resolveNetwork(ctx context.Context, client *api.ClientWithResponses, nameOr
 	return "", fmt.Errorf("no network named %q in your tenant: see your networks on the portal", nameOrId)
 }
 
-func resolveTemplate(ctx context.Context, client *api.ClientWithResponses, zone string, nameOrId string) (string, error) {
-	templates, err := catalog.Templates(ctx, client, zone)
+func resolveTemplate(ctx context.Context, client *api.ClientWithResponses, cluster string, nameOrId string) (string, error) {
+	templates, err := catalog.Templates(ctx, client, cluster)
 	if err != nil {
 		return "", err
 	}
@@ -424,7 +424,7 @@ func resolveTemplate(ctx context.Context, client *api.ClientWithResponses, zone 
 			return *template.Id, nil
 		}
 	}
-	return "", fmt.Errorf("no template named %q in zone %s: see `openvicloud template list --zone %s`", nameOrId, zone, zone)
+	return "", fmt.Errorf("no template named %q in cluster %s: see `openvicloud template list --cluster %s`", nameOrId, cluster, cluster)
 }
 
 func resolveSize(ctx context.Context, client *api.ClientWithResponses, nameOrId string) (string, error) {

@@ -88,7 +88,7 @@ type fakeApi struct {
 	sshVmId            string
 
 	// Resources of the tenant, as GET answers them.
-	zones     []map[string]any
+	clusters  []map[string]any
 	templates []map[string]any
 	sizes     []map[string]any
 	vms       []map[string]any
@@ -102,7 +102,7 @@ type fakeApi struct {
 	writeRefusal     int
 	writeRefusalBody string
 	writes           []recordedWrite
-	templateZones    []string
+	templateClusters []string
 }
 
 // recordedWrite is one request that changes something, as the fake API received it.
@@ -138,19 +138,19 @@ func newFakeApi(t *testing.T) *fakeApi {
 		w.Write([]byte(fake.tenantBody))
 	})
 	fake.vms = []map[string]any{
-		{"id": "5b0e7f4c-0000-4000-8000-000000000001", "name": "web-1", "zoneId": "local-mac", "currentState": "Running",
+		{"id": "5b0e7f4c-0000-4000-8000-000000000001", "name": "web-1", "clusterId": "local-mac", "currentState": "Running",
 			"desiredState": "Running", "currentExistence": "Exists", "desiredExistence": "Exists", "transition": nil, "ipAddress": "10.0.0.2"},
-		{"id": "5b0e7f4c-0000-4000-8000-000000000002", "name": "db-1", "zoneId": "local-mac", "currentState": "Stopped",
+		{"id": "5b0e7f4c-0000-4000-8000-000000000002", "name": "db-1", "clusterId": "local-mac", "currentState": "Stopped",
 			"desiredState": "Stopped", "currentExistence": "Exists", "desiredExistence": "Exists", "transition": nil, "ipAddress": nil},
 	}
-	fake.zones = []map[string]any{{"id": "local-mac", "name": "Local Mac"}}
+	fake.clusters = []map[string]any{{"id": "local-mac", "name": "Local Mac"}}
 	fake.templates = []map[string]any{{"id": "tpl-ubuntu", "name": "Ubuntu-22.04-Standard", "os": "Ubuntu 22.04", "diskGb": 10, "description": nil}}
 	fake.sizes = []map[string]any{{"id": "m", "name": "Medium", "cpu": json.Number("1.5"), "vcpu": 2, "memoryMb": 4096, "pricePerHour": json.Number("0.0123456789")}}
-	fake.networks = []map[string]any{{"id": "9a1d0000-0000-4000-8000-000000000001", "name": "app-net", "zoneId": "local-mac"}}
+	fake.networks = []map[string]any{{"id": "9a1d0000-0000-4000-8000-000000000001", "name": "app-net", "clusterId": "local-mac"}}
 	fake.sshKeys = []map[string]any{{"id": "c3c30000-0000-4000-8000-000000000001", "name": "laptop", "type": "ssh-ed25519", "fingerprint": "SHA256:abc"}}
-	mux.HandleFunc("GET /v1/zones", func(w http.ResponseWriter, r *http.Request) { writeJSON(w, http.StatusOK, fake.zones) })
+	mux.HandleFunc("GET /v1/clusters", func(w http.ResponseWriter, r *http.Request) { writeJSON(w, http.StatusOK, fake.clusters) })
 	mux.HandleFunc("GET /v1/templates", func(w http.ResponseWriter, r *http.Request) {
-		fake.templateZones = append(fake.templateZones, r.URL.Query().Get("zoneId"))
+		fake.templateClusters = append(fake.templateClusters, r.URL.Query().Get("clusterId"))
 		writeJSON(w, http.StatusOK, fake.templates)
 	})
 	mux.HandleFunc("GET /v1/vm-offerings", func(w http.ResponseWriter, r *http.Request) { writeJSON(w, http.StatusOK, fake.sizes) })

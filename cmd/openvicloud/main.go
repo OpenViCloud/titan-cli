@@ -51,7 +51,7 @@ func newRootCommand(deps *command.Deps) *cobra.Command {
 	root.AddCommand(
 		auth.New(deps),
 		tenant.New(deps),
-		catalog.NewZone(deps),
+		catalog.NewCluster(deps),
 		catalog.NewTemplate(deps),
 		catalog.NewSize(deps),
 		vm.New(deps),

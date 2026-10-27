@@ -10,7 +10,7 @@ import (
 
 // US-CLI-10 and US-CLI-16: catalog, VM lifecycle with --wait, SSH keys — against the fake /v1 API of main_test.go.
 
-const vmJson = `{"id":"%s","name":"web-2","zoneId":"local-mac","currentState":%s,"desiredState":"%s","currentExistence":"%s",` +
+const vmJson = `{"id":"%s","name":"web-2","clusterId":"local-mac","currentState":%s,"desiredState":"%s","currentExistence":"%s",` +
 	`"desiredExistence":"%s","transition":%s,"ipAddress":%s,"requestFailureReason":%s}`
 
 // vmRead is one answer of GET /v1/tenant/vms/{id} for the VM the create makes.
@@ -36,31 +36,31 @@ func lastWrite(t *testing.T, h *harness) recordedWrite {
 
 // US-CLI-10 AC-1
 
-func TestZoneList_PrintsIdAndName(t *testing.T) {
+func TestClusterList_PrintsIdAndName(t *testing.T) {
 	h := newHarness(t)
 	h.login()
 
-	err := h.run("zone", "list")
+	err := h.run("cluster", "list")
 
 	if err != nil {
-		t.Fatalf("zone list: %v", err)
+		t.Fatalf("cluster list: %v", err)
 	}
 	mustContain(t, "stdout", h.stdout.String(), "ID")
 	mustContain(t, "stdout", h.stdout.String(), "local-mac")
 	mustContain(t, "stdout", h.stdout.String(), "Local Mac")
 }
 
-func TestTemplateList_ByZone_AsksForThatZone_AndPrintsOsAndDisk(t *testing.T) {
+func TestTemplateList_ByCluster_AsksForThatCluster_AndPrintsOsAndDisk(t *testing.T) {
 	h := newHarness(t)
 	h.login()
 
-	err := h.run("template", "list", "--zone", "local-mac")
+	err := h.run("template", "list", "--cluster", "local-mac")
 
 	if err != nil {
 		t.Fatalf("template list: %v", err)
 	}
-	if len(h.api.templateZones) != 1 || h.api.templateZones[0] != "local-mac" {
-		t.Fatalf("zoneId sent = %v", h.api.templateZones)
+	if len(h.api.templateClusters) != 1 || h.api.templateClusters[0] != "local-mac" {
+		t.Fatalf("clusterId sent = %v", h.api.templateClusters)
 	}
 	mustContain(t, "stdout", h.stdout.String(), "Ubuntu-22.04-Standard")
 	mustContain(t, "stdout", h.stdout.String(), "Ubuntu 22.04")
@@ -140,7 +140,7 @@ func TestVmCreate_SendsTheIdsOfTheNamedResources_AndPrintsTheNewId(t *testing.T)
 	h := newHarness(t)
 	h.login()
 
-	err := h.run("vm", "create", "web-2", "--zone", "local-mac", "--network", "app-net",
+	err := h.run("vm", "create", "web-2", "--cluster", "local-mac", "--network", "app-net",
 		"--template", "Ubuntu-22.04-Standard", "--size", "Medium", "--ssh-key", "laptop")
 
 	if err != nil {
@@ -151,7 +151,7 @@ func TestVmCreate_SendsTheIdsOfTheNamedResources_AndPrintsTheNewId(t *testing.T)
 		t.Fatalf("write = %+v", write)
 	}
 	want := map[string]any{
-		"name": "web-2", "zoneId": "local-mac", "networkId": "9a1d0000-0000-4000-8000-000000000001",
+		"name": "web-2", "clusterId": "local-mac", "networkId": "9a1d0000-0000-4000-8000-000000000001",
 		"templateId": "tpl-ubuntu", "vmOfferingId": "m",
 		"sshKeyIds": []any{"c3c30000-0000-4000-8000-000000000001"},
 	}
@@ -169,7 +169,7 @@ func TestVmCreate_UnknownNetwork_SaysSo_AndCreatesNothing(t *testing.T) {
 	h := newHarness(t)
 	h.login()
 
-	err := h.run("vm", "create", "web-2", "--zone", "local-mac", "--network", "nope",
+	err := h.run("vm", "create", "web-2", "--cluster", "local-mac", "--network", "nope",
 		"--template", "tpl-ubuntu", "--size", "m")
 
 	if err == nil || !strings.Contains(err.Error(), `no network named "nope"`) {
@@ -184,7 +184,7 @@ func TestVmCreate_UnknownSshKey_SaysSo_AndCreatesNothing(t *testing.T) {
 	h := newHarness(t)
 	h.login()
 
-	err := h.run("vm", "create", "web-2", "--zone", "local-mac", "--network", "app-net",
+	err := h.run("vm", "create", "web-2", "--cluster", "local-mac", "--network", "app-net",
 		"--template", "tpl-ubuntu", "--size", "m", "--ssh-key", "laptop", "--ssh-key", "desktop")
 
 	if err == nil || !strings.Contains(err.Error(), `no SSH key named "desktop"`) {
@@ -202,7 +202,7 @@ func TestVmCreate_AnswerLost_SendsAgainWithTheSameKey(t *testing.T) {
 	h.login()
 	h.api.createAnswers = []int{502}
 
-	err := h.run("vm", "create", "web-2", "--zone", "local-mac", "--network", "app-net",
+	err := h.run("vm", "create", "web-2", "--cluster", "local-mac", "--network", "app-net",
 		"--template", "tpl-ubuntu", "--size", "m")
 
 	if err != nil {
@@ -223,7 +223,7 @@ func TestVmCreate_AnswerLostEveryTime_GivesUpAfterThreeSends(t *testing.T) {
 	h.login()
 	h.api.createAnswers = []int{502, 503, 504, 502}
 
-	err := h.run("vm", "create", "web-2", "--zone", "local-mac", "--network", "app-net", "--template", "tpl-ubuntu", "--size", "m")
+	err := h.run("vm", "create", "web-2", "--cluster", "local-mac", "--network", "app-net", "--template", "tpl-ubuntu", "--size", "m")
 
 	if err == nil {
 		t.Fatalf("vm create succeeded, want the last refusal")
@@ -238,7 +238,7 @@ func TestVmCreate_TwoRuns_UseTwoKeys(t *testing.T) {
 	h.login()
 
 	for i := 0; i < 2; i++ {
-		err := h.run("vm", "create", "web-2", "--zone", "local-mac", "--network", "app-net", "--template", "tpl-ubuntu", "--size", "m")
+		err := h.run("vm", "create", "web-2", "--cluster", "local-mac", "--network", "app-net", "--template", "tpl-ubuntu", "--size", "m")
 		if err != nil {
 			t.Fatalf("vm create: %v", err)
 		}
@@ -260,7 +260,7 @@ func TestVmCreate_Wait_UntilRunning_PrintsTheFinalState(t *testing.T) {
 		vmRead(`"Running"`, "Running", "Exists", "Exists", "null", `"10.0.0.9"`, "null"),
 	}}
 
-	err := h.run("vm", "create", "web-2", "--zone", "local-mac", "--network", "app-net",
+	err := h.run("vm", "create", "web-2", "--cluster", "local-mac", "--network", "app-net",
 		"--template", "tpl-ubuntu", "--size", "m", "--wait")
 
 	if err != nil {
@@ -278,7 +278,7 @@ func TestVmCreate_Wait_RequestFailed_FailsWithTheReason(t *testing.T) {
 		vmRead("null", "Running", "NotCreated", "Exists", "null", "null", `"VM provisioning failed due to a system error."`),
 	}}
 
-	err := h.run("vm", "create", "web-2", "--zone", "local-mac", "--network", "app-net",
+	err := h.run("vm", "create", "web-2", "--cluster", "local-mac", "--network", "app-net",
 		"--template", "tpl-ubuntu", "--size", "m", "--wait")
 
 	if err == nil || !strings.Contains(err.Error(), "VM provisioning failed due to a system error.") {
@@ -408,7 +408,7 @@ func TestVmCreate_ServerRefuses_ShowsTheTitleAndTheCode(t *testing.T) {
 	h.api.writeRefusal = 422
 	h.api.writeRefusalBody = `{"status":422,"title":"VM quota exceeded (max 5).","code":"VM_QUOTA_EXCEEDED"}`
 
-	err := h.run("vm", "create", "web-2", "--zone", "local-mac", "--network", "app-net", "--template", "tpl-ubuntu", "--size", "m")
+	err := h.run("vm", "create", "web-2", "--cluster", "local-mac", "--network", "app-net", "--template", "tpl-ubuntu", "--size", "m")
 
 	if err == nil || !strings.Contains(err.Error(), "VM quota exceeded (max 5). (VM_QUOTA_EXCEEDED)") {
 		t.Fatalf("err = %v", err)

@@ -1,4 +1,4 @@
-// Package catalog is what a customer chooses from when creating a VM: `zone list`, `template list`, `size list`.
+// Package catalog is what a customer chooses from when creating a VM: `cluster list`, `template list`, `size list`.
 package catalog
 
 import (
@@ -11,18 +11,18 @@ import (
 	"github.com/OpenViCloud/titan-cli/output"
 )
 
-func NewZone(deps *command.Deps) *cobra.Command {
-	zone := &cobra.Command{Use: "zone", Short: "Zones you can create resources in"}
-	zone.AddCommand(&cobra.Command{
+func NewCluster(deps *command.Deps) *cobra.Command {
+	cluster := &cobra.Command{Use: "cluster", Short: "Clusters you can create resources in"}
+	cluster.AddCommand(&cobra.Command{
 		Use:   "list",
-		Short: "List the zones",
+		Short: "List the clusters",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client, err := deps.Client(cmd.Context())
 			if err != nil {
 				return err
 			}
-			response, err := client.TitanInfrastructureEndpointsCatalogListZonesEndpointWithResponse(cmd.Context())
+			response, err := client.TitanInfrastructureEndpointsCatalogListClustersEndpointWithResponse(cmd.Context())
 			if err != nil {
 				return err
 			}
@@ -30,17 +30,17 @@ func NewZone(deps *command.Deps) *cobra.Command {
 				return output.Explain(api.ProblemOf(response.HTTPResponse, response.Body))
 			}
 			rows := [][]string{}
-			for _, zone := range *response.JSON200 {
-				rows = append(rows, []string{output.Text(zone.Id), output.Text(zone.Name)})
+			for _, cluster := range *response.JSON200 {
+				rows = append(rows, []string{output.Text(cluster.Id), output.Text(cluster.Name)})
 			}
 			return deps.Printer.Table([]string{"ID", "NAME"}, rows, response.JSON200)
 		},
 	})
-	return zone
+	return cluster
 }
 
 func NewTemplate(deps *command.Deps) *cobra.Command {
-	var zone string
+	var cluster string
 	list := &cobra.Command{
 		Use:   "list",
 		Short: "List the operating systems a VM can start from",
@@ -50,7 +50,7 @@ func NewTemplate(deps *command.Deps) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			templates, err := Templates(cmd.Context(), client, zone)
+			templates, err := Templates(cmd.Context(), client, cluster)
 			if err != nil {
 				return err
 			}
@@ -61,17 +61,17 @@ func NewTemplate(deps *command.Deps) *cobra.Command {
 			return deps.Printer.Table([]string{"ID", "NAME", "OS", "DISK GB"}, rows, templates)
 		},
 	}
-	list.Flags().StringVar(&zone, "zone", "", "only the templates ready in this zone")
+	list.Flags().StringVar(&cluster, "cluster", "", "only the templates ready in this cluster")
 	template := &cobra.Command{Use: "template", Short: "Operating systems for VMs"}
 	template.AddCommand(list)
 	return template
 }
 
-// Templates lists the templates a customer can pick, in one zone when zone is set.
-func Templates(ctx context.Context, client *api.ClientWithResponses, zone string) ([]api.TemplateQueryResult, error) {
+// Templates lists the templates a customer can pick, in one cluster when cluster is set.
+func Templates(ctx context.Context, client *api.ClientWithResponses, cluster string) ([]api.TemplateQueryResult, error) {
 	params := &api.TitanInfrastructureEndpointsCatalogListTemplatesEndpointParams{}
-	if zone != "" {
-		params.ZoneId = &zone
+	if cluster != "" {
+		params.ClusterId = &cluster
 	}
 	response, err := client.TitanInfrastructureEndpointsCatalogListTemplatesEndpointWithResponse(ctx, params)
 	if err != nil {
