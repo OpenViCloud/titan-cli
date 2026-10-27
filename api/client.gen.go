@@ -231,11 +231,11 @@ type CreateLoadBalancerCommandResult struct {
 // CreateNetworkCommand defines model for CreateNetworkCommand.
 type CreateNetworkCommand struct {
 	Cidr                 *string         `json:"cidr"`
+	ClusterId            string          `json:"clusterId"`
 	DefaultEgressPolicy  *FirewallPolicy `json:"defaultEgressPolicy,omitempty"`
 	DefaultIngressPolicy *FirewallPolicy `json:"defaultIngressPolicy,omitempty"`
 	EnablePublicIpv6     *bool           `json:"enablePublicIpv6,omitempty"`
 	Name                 string          `json:"name"`
-	ZoneId               string          `json:"zoneId"`
 }
 
 // CreateNetworkCommandResult defines model for CreateNetworkCommandResult.
@@ -250,6 +250,7 @@ type CreateSnapshotBody struct {
 
 // CreateVmCommand defines model for CreateVmCommand.
 type CreateVmCommand struct {
+	ClusterId    string    `json:"clusterId"`
 	DiskSizeGb   *int32    `json:"diskSizeGb"`
 	Name         string    `json:"name"`
 	NetworkId    string    `json:"networkId"`
@@ -257,7 +258,6 @@ type CreateVmCommand struct {
 	TemplateId   string    `json:"templateId"`
 	UserData     *string   `json:"userData"`
 	VmOfferingId string    `json:"vmOfferingId"`
-	ZoneId       string    `json:"zoneId"`
 }
 
 // CreateVmCommandResult defines model for CreateVmCommandResult.
@@ -272,10 +272,10 @@ type CreateVmSnapshotCommandResult struct {
 
 // CreateVolumeCommand defines model for CreateVolumeCommand.
 type CreateVolumeCommand struct {
+	ClusterId        string `json:"clusterId"`
 	Name             string `json:"name"`
 	SizeGb           *int32 `json:"sizeGb,omitempty"`
 	VolumeOfferingId string `json:"volumeOfferingId"`
-	ZoneId           string `json:"zoneId"`
 }
 
 // CreateVolumeCommandResult defines model for CreateVolumeCommandResult.
@@ -408,6 +408,7 @@ type LoadBalancerListenerQueryResult struct {
 // LoadBalancerQueryResult defines model for LoadBalancerQueryResult.
 type LoadBalancerQueryResult struct {
 	Backends             *[]LoadBalancerBackendQueryResult  `json:"backends,omitempty"`
+	ClusterId            *string                            `json:"clusterId,omitempty"`
 	CreatedAt            *time.Time                         `json:"createdAt,omitempty"`
 	CurrentExistence     *CurrentExistence                  `json:"currentExistence,omitempty"`
 	DesiredExistence     *DesiredExistence                  `json:"desiredExistence,omitempty"`
@@ -419,7 +420,6 @@ type LoadBalancerQueryResult struct {
 	RequestFailureReason *string                            `json:"requestFailureReason"`
 	Transition           *LoadBalancerTransition            `json:"transition"`
 	Vip                  *string                            `json:"vip,omitempty"`
-	ZoneId               *string                            `json:"zoneId,omitempty"`
 }
 
 // LoadBalancerTransition defines model for LoadBalancerTransition.
@@ -428,6 +428,7 @@ type LoadBalancerTransition string
 // NetworkQueryResult defines model for NetworkQueryResult.
 type NetworkQueryResult struct {
 	Cidr                 *string            `json:"cidr"`
+	ClusterId            *string            `json:"clusterId,omitempty"`
 	CreatedAt            *time.Time         `json:"createdAt,omitempty"`
 	CurrentExistence     *CurrentExistence  `json:"currentExistence,omitempty"`
 	CurrentState         *NetworkStatus     `json:"currentState"`
@@ -442,7 +443,6 @@ type NetworkQueryResult struct {
 	RequestFailedAt      *time.Time         `json:"requestFailedAt"`
 	RequestFailureReason *string            `json:"requestFailureReason"`
 	Transition           *NetworkTransition `json:"transition"`
-	ZoneId               *string            `json:"zoneId,omitempty"`
 }
 
 // NetworkStatus defines model for NetworkStatus.
@@ -606,6 +606,7 @@ type VmOfferingQueryResult struct {
 
 // VmQueryResult defines model for VmQueryResult.
 type VmQueryResult struct {
+	ClusterId            *string           `json:"clusterId,omitempty"`
 	CreatedAt            *time.Time        `json:"createdAt,omitempty"`
 	CurrentExistence     *CurrentExistence `json:"currentExistence,omitempty"`
 	CurrentState         *VmState          `json:"currentState"`
@@ -623,7 +624,6 @@ type VmQueryResult struct {
 	Transition           *VmTransition     `json:"transition"`
 	UserData             *string           `json:"userData"`
 	VmOfferingId         *string           `json:"vmOfferingId,omitempty"`
-	ZoneId               *string           `json:"zoneId,omitempty"`
 }
 
 // VmSnapshotQueryResult defines model for VmSnapshotQueryResult.
@@ -658,6 +658,7 @@ type VolumeOfferingQueryResult struct {
 
 // VolumeQueryResult defines model for VolumeQueryResult.
 type VolumeQueryResult struct {
+	ClusterId                *string           `json:"clusterId,omitempty"`
 	CreatedAt                *time.Time        `json:"createdAt,omitempty"`
 	CurrentAttachedElsewhere *bool             `json:"currentAttachedElsewhere,omitempty"`
 	CurrentAttachedVmId      *string           `json:"currentAttachedVmId"`
@@ -671,7 +672,6 @@ type VolumeQueryResult struct {
 	SizeGb                   *int32            `json:"sizeGb,omitempty"`
 	Transition               *VolumeTransition `json:"transition"`
 	VolumeOfferingId         *string           `json:"volumeOfferingId,omitempty"`
-	ZoneId                   *string           `json:"zoneId,omitempty"`
 }
 
 // VolumeSnapshotQueryResult defines model for VolumeSnapshotQueryResult.
@@ -716,15 +716,9 @@ type WalletStatementQueryResult struct {
 	OpeningBalance *json.Number           `json:"openingBalance,omitempty"`
 }
 
-// ZoneInfo defines model for ZoneInfo.
-type ZoneInfo struct {
-	Id   *string `json:"id,omitempty"`
-	Name *string `json:"name,omitempty"`
-}
-
 // TitanInfrastructureEndpointsCatalogListTemplatesEndpointParams defines parameters for TitanInfrastructureEndpointsCatalogListTemplatesEndpoint.
 type TitanInfrastructureEndpointsCatalogListTemplatesEndpointParams struct {
-	ZoneId *string `form:"zoneId,omitempty" json:"zoneId,omitempty"`
+	ClusterId *string `form:"clusterId,omitempty" json:"clusterId,omitempty"`
 }
 
 // TitanInfrastructureEndpointsApiTokenCreateApiTokenEndpointParams defines parameters for TitanInfrastructureEndpointsApiTokenCreateApiTokenEndpoint.
@@ -914,6 +908,9 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 
 // The interface specification for the client above.
 type ClientInterface interface {
+	// TitanInfrastructureEndpointsCatalogListClustersEndpoint request
+	TitanInfrastructureEndpointsCatalogListClustersEndpoint(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// TitanInfrastructureEndpointsLegalRecordAcceptanceEndpoint request
 	TitanInfrastructureEndpointsLegalRecordAcceptanceEndpoint(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -1122,12 +1119,18 @@ type ClientInterface interface {
 
 	// TitanInfrastructureEndpointsCatalogListVolumeOfferingsEndpoint request
 	TitanInfrastructureEndpointsCatalogListVolumeOfferingsEndpoint(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+}
 
-	// TitanInfrastructureEndpointsCatalogListZonesEndpoint request
-	TitanInfrastructureEndpointsCatalogListZonesEndpoint(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	// TitanInfrastructureEndpointsCatalogListClustersEndpoint request
-	TitanInfrastructureEndpointsCatalogListClustersEndpoint(ctx context.Context, zoneId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+func (c *Client) TitanInfrastructureEndpointsCatalogListClustersEndpoint(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewTitanInfrastructureEndpointsCatalogListClustersEndpointRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
 }
 
 func (c *Client) TitanInfrastructureEndpointsLegalRecordAcceptanceEndpoint(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -2030,28 +2033,31 @@ func (c *Client) TitanInfrastructureEndpointsCatalogListVolumeOfferingsEndpoint(
 	return c.Client.Do(req)
 }
 
-func (c *Client) TitanInfrastructureEndpointsCatalogListZonesEndpoint(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewTitanInfrastructureEndpointsCatalogListZonesEndpointRequest(c.Server)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
+// NewTitanInfrastructureEndpointsCatalogListClustersEndpointRequest generates requests for TitanInfrastructureEndpointsCatalogListClustersEndpoint
+func NewTitanInfrastructureEndpointsCatalogListClustersEndpointRequest(server string) (*http.Request, error) {
+	var err error
 
-func (c *Client) TitanInfrastructureEndpointsCatalogListClustersEndpoint(ctx context.Context, zoneId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewTitanInfrastructureEndpointsCatalogListClustersEndpointRequest(c.Server, zoneId)
+	serverURL, err := url.Parse(server)
 	if err != nil {
 		return nil, err
 	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+
+	operationPath := fmt.Sprintf("/v1/clusters")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
 		return nil, err
 	}
-	return c.Client.Do(req)
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
 }
 
 // NewTitanInfrastructureEndpointsLegalRecordAcceptanceEndpointRequest generates requests for TitanInfrastructureEndpointsLegalRecordAcceptanceEndpoint
@@ -2184,9 +2190,9 @@ func NewTitanInfrastructureEndpointsCatalogListTemplatesEndpointRequest(server s
 	if params != nil {
 		queryValues := queryURL.Query()
 
-		if params.ZoneId != nil {
+		if params.ClusterId != nil {
 
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "zoneId", runtime.ParamLocationQuery, *params.ZoneId); err != nil {
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "clusterId", runtime.ParamLocationQuery, *params.ClusterId); err != nil {
 				return nil, err
 			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
 				return nil, err
@@ -4272,67 +4278,6 @@ func NewTitanInfrastructureEndpointsCatalogListVolumeOfferingsEndpointRequest(se
 	return req, nil
 }
 
-// NewTitanInfrastructureEndpointsCatalogListZonesEndpointRequest generates requests for TitanInfrastructureEndpointsCatalogListZonesEndpoint
-func NewTitanInfrastructureEndpointsCatalogListZonesEndpointRequest(server string) (*http.Request, error) {
-	var err error
-
-	serverURL, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
-	operationPath := fmt.Sprintf("/v1/zones")
-	if operationPath[0] == '/' {
-		operationPath = "." + operationPath
-	}
-
-	queryURL, err := serverURL.Parse(operationPath)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest("GET", queryURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	return req, nil
-}
-
-// NewTitanInfrastructureEndpointsCatalogListClustersEndpointRequest generates requests for TitanInfrastructureEndpointsCatalogListClustersEndpoint
-func NewTitanInfrastructureEndpointsCatalogListClustersEndpointRequest(server string, zoneId string) (*http.Request, error) {
-	var err error
-
-	var pathParam0 string
-
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "zoneId", runtime.ParamLocationPath, zoneId)
-	if err != nil {
-		return nil, err
-	}
-
-	serverURL, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
-	operationPath := fmt.Sprintf("/v1/zones/%s/clusters", pathParam0)
-	if operationPath[0] == '/' {
-		operationPath = "." + operationPath
-	}
-
-	queryURL, err := serverURL.Parse(operationPath)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest("GET", queryURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	return req, nil
-}
-
 func (c *Client) applyEditors(ctx context.Context, req *http.Request, additionalEditors []RequestEditorFn) error {
 	for _, r := range c.RequestEditors {
 		if err := r(ctx, req); err != nil {
@@ -4376,6 +4321,9 @@ func WithBaseURL(baseURL string) ClientOption {
 
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
+	// TitanInfrastructureEndpointsCatalogListClustersEndpointWithResponse request
+	TitanInfrastructureEndpointsCatalogListClustersEndpointWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TitanInfrastructureEndpointsCatalogListClustersEndpointResponse, error)
+
 	// TitanInfrastructureEndpointsLegalRecordAcceptanceEndpointWithResponse request
 	TitanInfrastructureEndpointsLegalRecordAcceptanceEndpointWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TitanInfrastructureEndpointsLegalRecordAcceptanceEndpointResponse, error)
 
@@ -4584,12 +4532,28 @@ type ClientWithResponsesInterface interface {
 
 	// TitanInfrastructureEndpointsCatalogListVolumeOfferingsEndpointWithResponse request
 	TitanInfrastructureEndpointsCatalogListVolumeOfferingsEndpointWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TitanInfrastructureEndpointsCatalogListVolumeOfferingsEndpointResponse, error)
+}
 
-	// TitanInfrastructureEndpointsCatalogListZonesEndpointWithResponse request
-	TitanInfrastructureEndpointsCatalogListZonesEndpointWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TitanInfrastructureEndpointsCatalogListZonesEndpointResponse, error)
+type TitanInfrastructureEndpointsCatalogListClustersEndpointResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *[]ClusterInfo
+}
 
-	// TitanInfrastructureEndpointsCatalogListClustersEndpointWithResponse request
-	TitanInfrastructureEndpointsCatalogListClustersEndpointWithResponse(ctx context.Context, zoneId string, reqEditors ...RequestEditorFn) (*TitanInfrastructureEndpointsCatalogListClustersEndpointResponse, error)
+// Status returns HTTPResponse.Status
+func (r TitanInfrastructureEndpointsCatalogListClustersEndpointResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r TitanInfrastructureEndpointsCatalogListClustersEndpointResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
 }
 
 type TitanInfrastructureEndpointsLegalRecordAcceptanceEndpointResponse struct {
@@ -5870,48 +5834,13 @@ func (r TitanInfrastructureEndpointsCatalogListVolumeOfferingsEndpointResponse) 
 	return 0
 }
 
-type TitanInfrastructureEndpointsCatalogListZonesEndpointResponse struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSON200      *[]ZoneInfo
-}
-
-// Status returns HTTPResponse.Status
-func (r TitanInfrastructureEndpointsCatalogListZonesEndpointResponse) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
+// TitanInfrastructureEndpointsCatalogListClustersEndpointWithResponse request returning *TitanInfrastructureEndpointsCatalogListClustersEndpointResponse
+func (c *ClientWithResponses) TitanInfrastructureEndpointsCatalogListClustersEndpointWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TitanInfrastructureEndpointsCatalogListClustersEndpointResponse, error) {
+	rsp, err := c.TitanInfrastructureEndpointsCatalogListClustersEndpoint(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
 	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r TitanInfrastructureEndpointsCatalogListZonesEndpointResponse) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
-type TitanInfrastructureEndpointsCatalogListClustersEndpointResponse struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSON200      *[]ClusterInfo
-}
-
-// Status returns HTTPResponse.Status
-func (r TitanInfrastructureEndpointsCatalogListClustersEndpointResponse) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r TitanInfrastructureEndpointsCatalogListClustersEndpointResponse) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
+	return ParseTitanInfrastructureEndpointsCatalogListClustersEndpointResponse(rsp)
 }
 
 // TitanInfrastructureEndpointsLegalRecordAcceptanceEndpointWithResponse request returning *TitanInfrastructureEndpointsLegalRecordAcceptanceEndpointResponse
@@ -6573,22 +6502,30 @@ func (c *ClientWithResponses) TitanInfrastructureEndpointsCatalogListVolumeOffer
 	return ParseTitanInfrastructureEndpointsCatalogListVolumeOfferingsEndpointResponse(rsp)
 }
 
-// TitanInfrastructureEndpointsCatalogListZonesEndpointWithResponse request returning *TitanInfrastructureEndpointsCatalogListZonesEndpointResponse
-func (c *ClientWithResponses) TitanInfrastructureEndpointsCatalogListZonesEndpointWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TitanInfrastructureEndpointsCatalogListZonesEndpointResponse, error) {
-	rsp, err := c.TitanInfrastructureEndpointsCatalogListZonesEndpoint(ctx, reqEditors...)
+// ParseTitanInfrastructureEndpointsCatalogListClustersEndpointResponse parses an HTTP response from a TitanInfrastructureEndpointsCatalogListClustersEndpointWithResponse call
+func ParseTitanInfrastructureEndpointsCatalogListClustersEndpointResponse(rsp *http.Response) (*TitanInfrastructureEndpointsCatalogListClustersEndpointResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
-	return ParseTitanInfrastructureEndpointsCatalogListZonesEndpointResponse(rsp)
-}
 
-// TitanInfrastructureEndpointsCatalogListClustersEndpointWithResponse request returning *TitanInfrastructureEndpointsCatalogListClustersEndpointResponse
-func (c *ClientWithResponses) TitanInfrastructureEndpointsCatalogListClustersEndpointWithResponse(ctx context.Context, zoneId string, reqEditors ...RequestEditorFn) (*TitanInfrastructureEndpointsCatalogListClustersEndpointResponse, error) {
-	rsp, err := c.TitanInfrastructureEndpointsCatalogListClustersEndpoint(ctx, zoneId, reqEditors...)
-	if err != nil {
-		return nil, err
+	response := &TitanInfrastructureEndpointsCatalogListClustersEndpointResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
 	}
-	return ParseTitanInfrastructureEndpointsCatalogListClustersEndpointResponse(rsp)
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest []ClusterInfo
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
 }
 
 // ParseTitanInfrastructureEndpointsLegalRecordAcceptanceEndpointResponse parses an HTTP response from a TitanInfrastructureEndpointsLegalRecordAcceptanceEndpointWithResponse call
@@ -7915,58 +7852,6 @@ func ParseTitanInfrastructureEndpointsCatalogListVolumeOfferingsEndpointResponse
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest []VolumeOfferingQueryResult
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
-
-	}
-
-	return response, nil
-}
-
-// ParseTitanInfrastructureEndpointsCatalogListZonesEndpointResponse parses an HTTP response from a TitanInfrastructureEndpointsCatalogListZonesEndpointWithResponse call
-func ParseTitanInfrastructureEndpointsCatalogListZonesEndpointResponse(rsp *http.Response) (*TitanInfrastructureEndpointsCatalogListZonesEndpointResponse, error) {
-	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &TitanInfrastructureEndpointsCatalogListZonesEndpointResponse{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest []ZoneInfo
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
-
-	}
-
-	return response, nil
-}
-
-// ParseTitanInfrastructureEndpointsCatalogListClustersEndpointResponse parses an HTTP response from a TitanInfrastructureEndpointsCatalogListClustersEndpointWithResponse call
-func ParseTitanInfrastructureEndpointsCatalogListClustersEndpointResponse(rsp *http.Response) (*TitanInfrastructureEndpointsCatalogListClustersEndpointResponse, error) {
-	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &TitanInfrastructureEndpointsCatalogListClustersEndpointResponse{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest []ClusterInfo
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}

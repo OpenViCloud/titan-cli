@@ -1797,22 +1797,12 @@
         ]
       }
     },
-    "/v1/zones/{zoneId}/clusters": {
+    "/v1/clusters": {
       "get": {
         "tags": [
           "V1"
         ],
         "operationId": "TitanInfrastructureEndpointsCatalogListClustersEndpoint",
-        "parameters": [
-          {
-            "name": "zoneId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -1861,7 +1851,7 @@
         "operationId": "TitanInfrastructureEndpointsCatalogListTemplatesEndpoint",
         "parameters": [
           {
-            "name": "zoneId",
+            "name": "clusterId",
             "in": "query",
             "schema": {
               "type": "string",
@@ -1932,29 +1922,6 @@
                   "type": "array",
                   "items": {
                     "$ref": "#/components/schemas/VolumeOfferingQueryResult"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/v1/zones": {
-      "get": {
-        "tags": [
-          "V1"
-        ],
-        "operationId": "TitanInfrastructureEndpointsCatalogListZonesEndpoint",
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ZoneInfo"
                   }
                 }
               }
@@ -2505,7 +2472,7 @@
         "required": [
           "name",
           "volumeOfferingId",
-          "zoneId"
+          "clusterId"
         ],
         "properties": {
           "name": {
@@ -2519,7 +2486,7 @@
             "minLength": 1,
             "nullable": false
           },
-          "zoneId": {
+          "clusterId": {
             "type": "string",
             "minLength": 1,
             "nullable": false
@@ -2570,7 +2537,7 @@
               }
             ]
           },
-          "zoneId": {
+          "clusterId": {
             "type": "string"
           },
           "volumeOfferingId": {
@@ -2708,7 +2675,7 @@
           "networkId",
           "vmOfferingId",
           "templateId",
-          "zoneId"
+          "clusterId"
         ],
         "properties": {
           "name": {
@@ -2734,7 +2701,7 @@
             "minLength": 1,
             "nullable": false
           },
-          "zoneId": {
+          "clusterId": {
             "type": "string",
             "minLength": 1,
             "nullable": false
@@ -2810,7 +2777,7 @@
           "templateId": {
             "type": "string"
           },
-          "zoneId": {
+          "clusterId": {
             "type": "string"
           },
           "diskSizeGb": {
@@ -3167,7 +3134,7 @@
         "additionalProperties": false,
         "required": [
           "name",
-          "zoneId"
+          "clusterId"
         ],
         "properties": {
           "name": {
@@ -3177,7 +3144,7 @@
             "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]*$",
             "nullable": false
           },
-          "zoneId": {
+          "clusterId": {
             "type": "string",
             "minLength": 1,
             "nullable": false
@@ -3221,7 +3188,7 @@
           "name": {
             "type": "string"
           },
-          "zoneId": {
+          "clusterId": {
             "type": "string"
           },
           "cidr": {
@@ -3510,7 +3477,7 @@
             "type": "string",
             "format": "guid"
           },
-          "zoneId": {
+          "clusterId": {
             "type": "string"
           },
           "vip": {
@@ -3684,10 +3651,6 @@
           }
         }
       },
-      "ListClustersRequest": {
-        "type": "object",
-        "additionalProperties": false
-      },
       "OsImageInfo": {
         "type": "object",
         "additionalProperties": false,
@@ -3781,18 +3744,6 @@
           "pricePerGbPerHour": {
             "type": "number",
             "format": "decimal"
-          }
-        }
-      },
-      "ZoneInfo": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "name": {
-            "type": "string"
           }
         }
       },

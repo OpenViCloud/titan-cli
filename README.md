@@ -48,7 +48,7 @@ no browser login is needed then.
 | Area | Commands |
 |---|---|
 | Account | `auth login` · `auth logout` · `auth status` · `tenant get` · `version` |
-| Catalog | `zone list` · `template list [--zone]` · `size list` |
+| Catalog | `cluster list` · `template list [--cluster]` · `size list` |
 | VMs | `vm list` · `vm get` · `vm create` · `vm rename` · `vm start` · `vm stop` · `vm delete` · `vm ssh` |
 | SSH keys | `ssh-key add` · `ssh-key list` · `ssh-key delete` |
 
