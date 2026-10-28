@@ -55,7 +55,7 @@ no browser login is needed then.
 `create`, `start`, `stop` and `delete` take `--wait` to return only once the request is done. Every command takes
 `-o json`. Names or ids are accepted wherever a VM, network, template, size or SSH key is chosen.
 
-The CLI targets the OpenViCloud staging API until production exists; `OPENVICLOUD_API_URL`, `OPENVICLOUD_AUTH_URL`
+The CLI targets the OpenViCloud API at `https://api.openvicloud.com`; `OPENVICLOUD_API_URL`, `OPENVICLOUD_AUTH_URL`
 and `OPENVICLOUD_PORTAL_URL` point it elsewhere.
 
 ## Development

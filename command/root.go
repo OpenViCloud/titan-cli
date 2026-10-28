@@ -24,12 +24,11 @@ import (
 	"github.com/OpenViCloud/titan-cli/wait"
 )
 
-// Until a production host exists the CLI targets staging; each default is overridden by its environment
-// variable.
+// The CLI targets OpenViCloud's production hosts; each default is overridden by its environment variable.
 const (
-	defaultApi    = "https://api-titan-staging.openvicloud.com"
-	defaultAuth   = "https://auth-titan-staging.openvicloud.com/auth/realms/titan"
-	defaultPortal = "https://portal-titan-staging.openvicloud.com"
+	defaultApi    = "https://api.openvicloud.com"
+	defaultAuth   = "https://auth.openvicloud.com/auth/realms/titan"
+	defaultPortal = "https://portal.openvicloud.com"
 )
 
 type Deps struct {

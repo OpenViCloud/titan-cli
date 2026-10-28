@@ -638,7 +638,7 @@ func TestOutputFormat_Unknown_IsRefused(t *testing.T) {
 	}
 }
 
-func TestEndpointsFromEnv_DefaultIsStaging_EnvOverrides(t *testing.T) {
+func TestEndpointsFromEnv_DefaultIsProduction_EnvOverrides(t *testing.T) {
 	defaults := command.EndpointsFromEnv(func(string) string { return "" })
 	overridden := command.EndpointsFromEnv(func(name string) string {
 		values := map[string]string{
@@ -649,11 +649,14 @@ func TestEndpointsFromEnv_DefaultIsStaging_EnvOverrides(t *testing.T) {
 		return values[name]
 	})
 
-	if defaults.Api != "https://api-titan-staging.openvicloud.com" {
+	if defaults.Api != "https://api.openvicloud.com" {
 		t.Fatalf("default API = %q", defaults.Api)
 	}
-	if defaults.Auth != "https://auth-titan-staging.openvicloud.com/auth/realms/titan" {
+	if defaults.Auth != "https://auth.openvicloud.com/auth/realms/titan" {
 		t.Fatalf("default auth = %q", defaults.Auth)
+	}
+	if defaults.Portal != "https://portal.openvicloud.com" {
+		t.Fatalf("default portal = %q", defaults.Portal)
 	}
 	if overridden.Api != "http://api.localhost:8080" || overridden.Auth != "http://auth.localhost:8080/auth/realms/titan" || overridden.Portal != "http://portal.localhost:8080" {
 		t.Fatalf("overridden = %+v", overridden)
