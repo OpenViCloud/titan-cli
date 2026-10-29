@@ -46,7 +46,7 @@ type Deps struct {
 	// For --wait and for retrying a create.
 	Clock wait.Clock
 	// From OPENVICLOUD_TOKEN: when set, every request carries it instead of the login session, for CI and scripts
-	// (https://github.com/OpenViCloud/titan-ops/blob/main/docs/features/cli/design.md#api-token).
+	// (titan-ops features/cli/design.md#api-token).
 	ApiToken string
 }
 
@@ -60,7 +60,7 @@ func (d *Deps) Confirm(question string) bool {
 }
 
 // NewIdempotencyKey is the key of one create: sent with every attempt of that create, never with another
-// (https://github.com/OpenViCloud/titan-ops/blob/main/docs/architecture/http-contract.md#idempotency-key).
+// (titan-ops architecture/http-contract.md#idempotency-key).
 func NewIdempotencyKey() string {
 	bytes := make([]byte, 16)
 	rand.Read(bytes)
@@ -171,7 +171,7 @@ func (d *Deps) Client(ctx context.Context) (*api.ClientWithResponses, error) {
 	return client, nil
 }
 
-// mustAcceptTerms mirrors the portal's consent gate (https://github.com/OpenViCloud/titan-ops/blob/main/docs/features/legal/design.md#consent-gate-per-user):
+// mustAcceptTerms mirrors the portal's consent gate (titan-ops features/legal/design.md#consent-gate-per-user):
 // when the status cannot be read the command runs, as the portal shows the app.
 func (d *Deps) mustAcceptTerms(ctx context.Context, client *api.ClientWithResponses) bool {
 	response, err := client.TitanInfrastructureEndpointsLegalGetConsentStatusEndpointWithResponse(ctx)

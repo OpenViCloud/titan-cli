@@ -11,7 +11,7 @@ import (
 	"github.com/OpenViCloud/titan-cli/command/vm"
 )
 
-// An API token from OPENVICLOUD_TOKEN replaces the browser login (https://github.com/OpenViCloud/titan-ops/blob/main/docs/features/cli/design.md#api-token).
+// An API token from OPENVICLOUD_TOKEN replaces the browser login (titan-ops features/cli/design.md#api-token).
 
 const apiToken = "ovc_q3v9Xk2LmP0aZ8yT4rWbN6cJ1dF5gH7sE9uIoK2pQwA"
 

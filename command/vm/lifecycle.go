@@ -21,13 +21,13 @@ const (
 	pollInterval   = 5 * time.Second
 	defaultTimeout = 10 * time.Minute
 	// A create whose answer was lost (no answer, 502/503/504) is sent again with the same Idempotency-Key, so the
-	// server makes one VM however many times it arrives (https://github.com/OpenViCloud/titan-ops/blob/main/docs/architecture/http-contract.md#idempotency-key).
+	// server makes one VM however many times it arrives (titan-ops architecture/http-contract.md#idempotency-key).
 	createAttempts = 3
 	retryPause     = 2 * time.Second
 )
 
 // goal is what a request ends in: once the VM has no request waiting (transition is null), reached says whether it
-// got there (https://github.com/OpenViCloud/titan-ops/blob/main/docs/features/cli/design.md#vm-wait).
+// got there (titan-ops features/cli/design.md#vm-wait).
 type goal struct {
 	want    string
 	reached func(vm *api.VmQueryResult) bool
