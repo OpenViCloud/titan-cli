@@ -76,7 +76,7 @@ scripts/sync-spec.sh <control-plane commit, tag or branch>
 
 CI fails when the committed client does not match the committed spec. A tag `vX.Y.Z` publishes a release
 (`.github/workflows/release.yml`, `.goreleaser.yaml`) once a maintainer approves the `release` environment. The
-design rules of the CLI live in titan-ops's [docs/features/cli](https://github.com/OpenViCloud/titan-ops/blob/main/docs/features/cli/design.md).
+design rules of the CLI live in titan-ops (private): `titan-ops features/cli/design.md`.
 
 ## License
 

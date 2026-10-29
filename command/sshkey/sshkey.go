@@ -1,5 +1,5 @@
 // Package sshkey is `openvicloud ssh-key`: the public keys of the tenant, picked when a VM is created
-// (https://github.com/OpenViCloud/titan-ops/blob/main/docs/features/vm/design.md#ssh-key).
+// (titan-ops features/vm/design.md#ssh-key).
 package sshkey
 
 import (
