@@ -86,7 +86,7 @@ func TestSizeList_KeepsEveryDigitOfThePrice(t *testing.T) {
 
 // US-CLI-10 AC-2
 
-func TestVmList_PrintsEachVmWithItsStateAndAddress(t *testing.T) {
+func TestVmList_PrintsEachVmWithItsStatusAndAddress(t *testing.T) {
 	h := newHarness(t)
 	h.login()
 
@@ -330,6 +330,39 @@ func TestVmCreate_Wait_PollsPastUnknown_ThenEndsStopped_Fails(t *testing.T) {
 
 	if err == nil || !strings.Contains(err.Error(), "is Stopped, not Running or Ready") {
 		t.Fatalf("err = %v", err)
+	}
+}
+
+func TestVmCreate_Wait_GaveUpAfterTheInstanceExists_FailsWithTheReason_ThoughItRunsLater(t *testing.T) {
+	h := newHarness(t)
+	h.login()
+	reason := `"Incus did not start the instance in time."`
+	h.api.vmReads = map[string][]string{createdVmId: {
+		vmRead("Creating", "null", "null"), vmRead("Unknown", "null", reason), vmRead("Running", "null", reason),
+	}}
+
+	err := h.run("vm", "create", "web-2", "--cluster", "local-mac", "--network", "app-net",
+		"--template", "tpl-ubuntu", "--size", "m", "--wait")
+
+	if err == nil || !strings.Contains(err.Error(), "Incus did not start the instance in time.") {
+		t.Fatalf("err = %v", err)
+	}
+}
+
+func TestVmStart_Wait_AReasonLeftByAnEarlierRequest_DoesNotFailIt(t *testing.T) {
+	h := newHarness(t)
+	h.login()
+	db1 := "5b0e7f4c-0000-4000-8000-000000000002"
+	stale := `"An earlier stop gave up."`
+	h.api.vmReads = map[string][]string{db1: {
+		strings.Replace(vmRead("Starting", "null", stale), createdVmId, db1, 1),
+		strings.Replace(vmRead("Running", "null", stale), createdVmId, db1, 1),
+	}}
+
+	err := h.run("vm", "start", "db-1", "--wait")
+
+	if err != nil {
+		t.Fatalf("vm start --wait: %v", err)
 	}
 }
 

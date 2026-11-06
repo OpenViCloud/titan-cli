@@ -118,7 +118,8 @@ const createdVmId = "5b0e7f4c-0000-4000-8000-0000000000aa"
 
 const sshBanner = "SSH-2.0-fake\r\n"
 
-// vmGone in fakeApi.vmReads answers 404, as the API does for a deleted VM.
+// vmGone in fakeApi.vmReads answers 404: the API answers a deleted VM with status Deleted, but the CLI also takes a
+// 404 as gone.
 const vmGone = "404"
 
 const acmeTenant = `{"id":"7d0c2f9e-4b1a-4c55-9a1e-3f2b8c6d1e01","name":"acme","status":"Active","maxVms":5,"maxNetworks":3,"createdAt":"2026-09-01T08:00:00Z","debtCeiling":500000}`

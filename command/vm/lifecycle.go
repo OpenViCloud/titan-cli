@@ -31,13 +31,18 @@ const (
 type goal struct {
 	want    string
 	reached func(status api.VmStatus) bool
+	// anyReasonFails: a new VM carries no failure reason until its create gives up, and the VM may still go on to
+	// Running after that (the instance exists, the reconciler reads it), so a reason ends the wait as a failure.
+	// Not for start or stop: a reason left by an earlier request stays until a later one succeeds.
+	anyReasonFails bool
 }
 
 var (
 	running = goal{want: "Running or Ready", reached: func(status api.VmStatus) bool {
 		return status == api.VmStatusRunning || status == api.VmStatusReady
 	}}
-	stopped = goal{want: "Stopped", reached: func(status api.VmStatus) bool {
+	createdGoal = goal{want: running.want, reached: running.reached, anyReasonFails: true}
+	stopped     = goal{want: "Stopped", reached: func(status api.VmStatus) bool {
 		return status == api.VmStatusStopped
 	}}
 	deleted = goal{want: "deleted", reached: func(status api.VmStatus) bool {
@@ -45,7 +50,8 @@ var (
 	}}
 )
 
-// settled says no request is waiting on the VM and Incus has said what its instance is doing. Unknown is waited out
+// settled says no request is waiting on the VM and its status will not change by itself: an Incus word, or NotFound,
+// Failed, Deleted. Unknown is waited out
 // like a pending request (the next observation replaces it), and so is a status word the CLI does not know: the API
 // may add words without breaking /v1.
 func settled(vm *api.VmQueryResult) bool {
@@ -170,8 +176,8 @@ func newCreate(deps *command.Deps) *cobra.Command {
 				deps.Printer.Message("Creating VM %s.", body.Name)
 				return deps.Printer.Object([]output.Field{{Name: "ID", Value: id}}, created)
 			}
-			deps.Printer.Message("Creating VM %s, waiting until it is %s...", body.Name, running.want)
-			vm, err := waitFor(ctx, deps, client, id, body.Name, running, flags.timeout)
+			deps.Printer.Message("Creating VM %s, waiting until it is %s...", body.Name, createdGoal.want)
+			vm, err := waitFor(ctx, deps, client, id, body.Name, createdGoal, flags.timeout)
 			if err != nil {
 				return err
 			}
@@ -354,10 +360,13 @@ func waitFor(ctx context.Context, deps *command.Deps, client *api.ClientWithResp
 			return false, output.Explain(api.ProblemOf(response.HTTPResponse, response.Body))
 		}
 		last = response.JSON200
+		if g.anyReasonFails && last.RequestFailureReason != nil {
+			return true, nil
+		}
 		return settled(last), nil
 	})
 	if errors.Is(err, wait.ErrTimeout) {
-		return nil, fmt.Errorf("VM %s is still %s after %s: the request goes on, check it with `openvicloud vm get %s`",
+		return nil, fmt.Errorf("VM %s is still %s after %s, check it with `openvicloud vm get %s`",
 			name, output.Word(last.Status), timeout, name)
 	}
 	if err != nil {
@@ -368,6 +377,9 @@ func waitFor(ctx context.Context, deps *command.Deps, client *api.ClientWithResp
 			return nil, nil
 		}
 		return nil, fmt.Errorf("VM %s no longer exists", name)
+	}
+	if g.anyReasonFails && last.RequestFailureReason != nil {
+		return nil, fmt.Errorf("the request for VM %s failed: %s", name, *last.RequestFailureReason)
 	}
 	if g.reached(*last.Status) {
 		return last, nil
