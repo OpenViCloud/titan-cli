@@ -10,12 +10,11 @@ import (
 
 // US-CLI-10 and US-CLI-16: catalog, VM lifecycle with --wait, SSH keys — against the fake /v1 API of main_test.go.
 
-const vmJson = `{"id":"%s","name":"web-2","clusterId":"local-mac","currentState":%s,"desiredState":"%s","currentExistence":"%s",` +
-	`"desiredExistence":"%s","transition":%s,"ipAddress":%s,"requestFailureReason":%s}`
+const vmJson = `{"id":"%s","name":"web-2","clusterId":"local-mac","status":"%s","ipAddress":%s,"requestFailureReason":%s}`
 
 // vmRead is one answer of GET /v1/tenant/vms/{id} for the VM the create makes.
-func vmRead(currentState string, desiredState string, currentExistence string, desiredExistence string, transition string, ip string, failure string) string {
-	return sprintf(vmJson, createdVmId, currentState, desiredState, currentExistence, desiredExistence, transition, ip, failure)
+func vmRead(status string, ip string, failure string) string {
+	return sprintf(vmJson, createdVmId, status, ip, failure)
 }
 
 func sprintf(format string, args ...string) string {
@@ -255,9 +254,9 @@ func TestVmCreate_Wait_UntilRunning_PrintsTheFinalState(t *testing.T) {
 	h := newHarness(t)
 	h.login()
 	h.api.vmReads = map[string][]string{createdVmId: {
-		vmRead("null", "Running", "NotCreated", "Exists", `"Creating"`, "null", "null"),
-		vmRead("null", "Running", "Exists", "Exists", `"Creating"`, "null", "null"),
-		vmRead(`"Running"`, "Running", "Exists", "Exists", "null", `"10.0.0.9"`, "null"),
+		vmRead("Creating", "null", "null"),
+		vmRead("Creating", "null", "null"),
+		vmRead("Running", `"10.0.0.9"`, "null"),
 	}}
 
 	err := h.run("vm", "create", "web-2", "--cluster", "local-mac", "--network", "app-net",
@@ -274,8 +273,8 @@ func TestVmCreate_Wait_RequestFailed_FailsWithTheReason(t *testing.T) {
 	h := newHarness(t)
 	h.login()
 	h.api.vmReads = map[string][]string{createdVmId: {
-		vmRead("null", "Running", "NotCreated", "Exists", `"Creating"`, "null", "null"),
-		vmRead("null", "Running", "NotCreated", "Exists", "null", "null", `"VM provisioning failed due to a system error."`),
+		vmRead("Creating", "null", "null"),
+		vmRead("Failed", "null", `"VM provisioning failed due to a system error."`),
 	}}
 
 	err := h.run("vm", "create", "web-2", "--cluster", "local-mac", "--network", "app-net",
@@ -291,8 +290,8 @@ func TestVmStop_Wait_RequestGaveUp_FailsWithTheState(t *testing.T) {
 	h.login()
 	web1 := "5b0e7f4c-0000-4000-8000-000000000001"
 	h.api.vmReads = map[string][]string{web1: {
-		strings.Replace(vmRead(`"Running"`, "Stopped", "Exists", "Exists", `"Stopping"`, "null", "null"), createdVmId, web1, 1),
-		strings.Replace(vmRead(`"Running"`, "Running", "Exists", "Exists", "null", "null", "null"), createdVmId, web1, 1),
+		strings.Replace(vmRead("Stopping", "null", "null"), createdVmId, web1, 1),
+		strings.Replace(vmRead("Running", "null", "null"), createdVmId, web1, 1),
 	}}
 
 	err := h.run("vm", "stop", "web-1", "--wait")
@@ -307,8 +306,8 @@ func TestVmDelete_Wait_UntilDeleted(t *testing.T) {
 	h.login()
 	web1 := "5b0e7f4c-0000-4000-8000-000000000001"
 	h.api.vmReads = map[string][]string{web1: {
-		strings.Replace(vmRead(`"Running"`, "Running", "Exists", "Deleted", `"Deleting"`, "null", "null"), createdVmId, web1, 1),
-		strings.Replace(vmRead("null", "Running", "Deleted", "Deleted", "null", "null", "null"), createdVmId, web1, 1),
+		strings.Replace(vmRead("Deleting", "null", "null"), createdVmId, web1, 1),
+		strings.Replace(vmRead("Deleted", "null", "null"), createdVmId, web1, 1),
 	}}
 
 	err := h.run("vm", "delete", "web-1", "--yes", "--wait")
@@ -319,12 +318,70 @@ func TestVmDelete_Wait_UntilDeleted(t *testing.T) {
 	mustContain(t, "stderr", h.stderr.String(), "deleted")
 }
 
+func TestVmCreate_Wait_PollsPastUnknown_ThenEndsStopped_Fails(t *testing.T) {
+	h := newHarness(t)
+	h.login()
+	h.api.vmReads = map[string][]string{createdVmId: {
+		vmRead("Creating", "null", "null"), vmRead("Unknown", "null", "null"), vmRead("Stopped", "null", "null"),
+	}}
+
+	err := h.run("vm", "create", "web-2", "--cluster", "local-mac", "--network", "app-net",
+		"--template", "tpl-ubuntu", "--size", "m", "--wait")
+
+	if err == nil || !strings.Contains(err.Error(), "is Stopped, not Running or Ready") {
+		t.Fatalf("err = %v", err)
+	}
+}
+
+func TestVmCreate_Wait_InstanceVanished_SaysSo(t *testing.T) {
+	h := newHarness(t)
+	h.login()
+	h.api.vmReads = map[string][]string{createdVmId: {vmRead("Creating", "null", "null"), vmRead("NotFound", "null", "null")}}
+
+	err := h.run("vm", "create", "web-2", "--cluster", "local-mac", "--network", "app-net",
+		"--template", "tpl-ubuntu", "--size", "m", "--wait")
+
+	if err == nil || !strings.Contains(err.Error(), "Incus no longer has its instance") {
+		t.Fatalf("err = %v", err)
+	}
+}
+
+func TestVmDelete_Wait_AnswersNotFound_IsDeleted(t *testing.T) {
+	h := newHarness(t)
+	h.login()
+	web1 := "5b0e7f4c-0000-4000-8000-000000000001"
+	h.api.vmReads = map[string][]string{web1: {strings.Replace(vmRead("Deleting", "null", "null"), createdVmId, web1, 1), vmGone}}
+
+	err := h.run("vm", "delete", "web-1", "--yes", "--wait")
+
+	if err != nil {
+		t.Fatalf("vm delete --wait: %v", err)
+	}
+	mustContain(t, "stderr", h.stderr.String(), "deleted")
+}
+
+func TestVmDelete_Wait_RequestFailed_FailsWithTheReason(t *testing.T) {
+	h := newHarness(t)
+	h.login()
+	web1 := "5b0e7f4c-0000-4000-8000-000000000001"
+	h.api.vmReads = map[string][]string{web1: {
+		strings.Replace(vmRead("Deleting", "null", "null"), createdVmId, web1, 1),
+		strings.Replace(vmRead("Running", "null", `"Incus refused to delete the instance."`), createdVmId, web1, 1),
+	}}
+
+	err := h.run("vm", "delete", "web-1", "--yes", "--wait")
+
+	if err == nil || !strings.Contains(err.Error(), "Incus refused to delete the instance.") {
+		t.Fatalf("err = %v", err)
+	}
+}
+
 func TestVmStart_Wait_NeverDone_StopsAtTheTimeout(t *testing.T) {
 	h := newHarness(t)
 	h.login()
 	db1 := "5b0e7f4c-0000-4000-8000-000000000002"
 	h.api.vmReads = map[string][]string{db1: {
-		strings.Replace(vmRead(`"Stopped"`, "Running", "Exists", "Exists", `"Starting"`, "null", "null"), createdVmId, db1, 1),
+		strings.Replace(vmRead("Starting", "null", "null"), createdVmId, db1, 1),
 	}}
 	started := h.now
 

@@ -37,7 +37,7 @@ func Time(value *time.Time) string {
 	return value.Format(time.RFC3339)
 }
 
-// Word is an enum value of the API (a state, a transition) as text.
+// Word is an enum value of the API (a status, a state) as text.
 func Word[T ~string](value *T) string {
 	if value == nil {
 		return "-"
