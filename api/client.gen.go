@@ -98,12 +98,6 @@ const (
 	TopUpStatusPending   TopUpStatus = "Pending"
 )
 
-// Defines values for VmDesiredState.
-const (
-	VmDesiredStateRunning VmDesiredState = "Running"
-	VmDesiredStateStopped VmDesiredState = "Stopped"
-)
-
 // Defines values for VmSnapshotTransition.
 const (
 	VmSnapshotTransitionCreating  VmSnapshotTransition = "Creating"
@@ -111,21 +105,21 @@ const (
 	VmSnapshotTransitionReverting VmSnapshotTransition = "Reverting"
 )
 
-// Defines values for VmState.
+// Defines values for VmStatus.
 const (
-	VmStateError   VmState = "Error"
-	VmStateFrozen  VmState = "Frozen"
-	VmStateReady   VmState = "Ready"
-	VmStateRunning VmState = "Running"
-	VmStateStopped VmState = "Stopped"
-)
-
-// Defines values for VmTransition.
-const (
-	VmTransitionCreating VmTransition = "Creating"
-	VmTransitionDeleting VmTransition = "Deleting"
-	VmTransitionStarting VmTransition = "Starting"
-	VmTransitionStopping VmTransition = "Stopping"
+	VmStatusCreating VmStatus = "Creating"
+	VmStatusDeleted  VmStatus = "Deleted"
+	VmStatusDeleting VmStatus = "Deleting"
+	VmStatusError    VmStatus = "Error"
+	VmStatusFailed   VmStatus = "Failed"
+	VmStatusFrozen   VmStatus = "Frozen"
+	VmStatusNotFound VmStatus = "NotFound"
+	VmStatusReady    VmStatus = "Ready"
+	VmStatusRunning  VmStatus = "Running"
+	VmStatusStarting VmStatus = "Starting"
+	VmStatusStopped  VmStatus = "Stopped"
+	VmStatusStopping VmStatus = "Stopping"
+	VmStatusUnknown  VmStatus = "Unknown"
 )
 
 // Defines values for VolumeSnapshotTransition.
@@ -591,9 +585,6 @@ type VmCostSummaryLine struct {
 	VmName    *string      `json:"vmName,omitempty"`
 }
 
-// VmDesiredState defines model for VmDesiredState.
-type VmDesiredState string
-
 // VmOfferingQueryResult defines model for VmOfferingQueryResult.
 type VmOfferingQueryResult struct {
 	Cpu          *json.Number `json:"cpu,omitempty"`
@@ -606,24 +597,20 @@ type VmOfferingQueryResult struct {
 
 // VmQueryResult defines model for VmQueryResult.
 type VmQueryResult struct {
-	ClusterId            *string           `json:"clusterId,omitempty"`
-	CreatedAt            *time.Time        `json:"createdAt,omitempty"`
-	CurrentExistence     *CurrentExistence `json:"currentExistence,omitempty"`
-	CurrentState         *VmState          `json:"currentState"`
-	DesiredExistence     *DesiredExistence `json:"desiredExistence,omitempty"`
-	DesiredState         *VmDesiredState   `json:"desiredState,omitempty"`
-	DiskSizeGb           *int32            `json:"diskSizeGb,omitempty"`
-	Id                   *string           `json:"id,omitempty"`
-	IpAddress            *string           `json:"ipAddress"`
-	Name                 *string           `json:"name,omitempty"`
-	NetworkId            *string           `json:"networkId,omitempty"`
-	PublicIpv6Address    *string           `json:"publicIpv6Address"`
-	RequestFailedAt      *time.Time        `json:"requestFailedAt"`
-	RequestFailureReason *string           `json:"requestFailureReason"`
-	TemplateId           *string           `json:"templateId,omitempty"`
-	Transition           *VmTransition     `json:"transition"`
-	UserData             *string           `json:"userData"`
-	VmOfferingId         *string           `json:"vmOfferingId,omitempty"`
+	ClusterId            *string    `json:"clusterId,omitempty"`
+	CreatedAt            *time.Time `json:"createdAt,omitempty"`
+	DiskSizeGb           *int32     `json:"diskSizeGb,omitempty"`
+	Id                   *string    `json:"id,omitempty"`
+	IpAddress            *string    `json:"ipAddress"`
+	Name                 *string    `json:"name,omitempty"`
+	NetworkId            *string    `json:"networkId,omitempty"`
+	PublicIpv6Address    *string    `json:"publicIpv6Address"`
+	RequestFailedAt      *time.Time `json:"requestFailedAt"`
+	RequestFailureReason *string    `json:"requestFailureReason"`
+	Status               *VmStatus  `json:"status,omitempty"`
+	TemplateId           *string    `json:"templateId,omitempty"`
+	UserData             *string    `json:"userData"`
+	VmOfferingId         *string    `json:"vmOfferingId,omitempty"`
 }
 
 // VmSnapshotQueryResult defines model for VmSnapshotQueryResult.
@@ -641,11 +628,8 @@ type VmSnapshotQueryResult struct {
 // VmSnapshotTransition defines model for VmSnapshotTransition.
 type VmSnapshotTransition string
 
-// VmState defines model for VmState.
-type VmState string
-
-// VmTransition defines model for VmTransition.
-type VmTransition string
+// VmStatus defines model for VmStatus.
+type VmStatus string
 
 // VolumeOfferingQueryResult defines model for VolumeOfferingQueryResult.
 type VolumeOfferingQueryResult struct {

@@ -94,7 +94,8 @@ type fakeApi struct {
 	vms       []map[string]any
 	networks  []map[string]any
 	sshKeys   []map[string]any
-	// GET /v1/tenant/vms/{id}: the answers in order, the last one repeated. Unset: the matching row of vms.
+	// GET /v1/tenant/vms/{id}: the answers in order, the last one repeated; vmGone answers 404. Unset: the matching
+	// row of vms.
 	vmReads map[string][]string
 	// Status codes of successive POST /v1/tenant/vms; when used up, 202 {vmId}.
 	createAnswers []int
@@ -117,6 +118,10 @@ const createdVmId = "5b0e7f4c-0000-4000-8000-0000000000aa"
 
 const sshBanner = "SSH-2.0-fake\r\n"
 
+// vmGone in fakeApi.vmReads answers 404: the API answers a deleted VM with status Deleted, but the CLI also takes a
+// 404 as gone.
+const vmGone = "404"
+
 const acmeTenant = `{"id":"7d0c2f9e-4b1a-4c55-9a1e-3f2b8c6d1e01","name":"acme","status":"Active","maxVms":5,"maxNetworks":3,"createdAt":"2026-09-01T08:00:00Z","debtCeiling":500000}`
 
 func newFakeApi(t *testing.T) *fakeApi {
@@ -138,10 +143,8 @@ func newFakeApi(t *testing.T) *fakeApi {
 		w.Write([]byte(fake.tenantBody))
 	})
 	fake.vms = []map[string]any{
-		{"id": "5b0e7f4c-0000-4000-8000-000000000001", "name": "web-1", "clusterId": "local-mac", "currentState": "Running",
-			"desiredState": "Running", "currentExistence": "Exists", "desiredExistence": "Exists", "transition": nil, "ipAddress": "10.0.0.2"},
-		{"id": "5b0e7f4c-0000-4000-8000-000000000002", "name": "db-1", "clusterId": "local-mac", "currentState": "Stopped",
-			"desiredState": "Stopped", "currentExistence": "Exists", "desiredExistence": "Exists", "transition": nil, "ipAddress": nil},
+		{"id": "5b0e7f4c-0000-4000-8000-000000000001", "name": "web-1", "clusterId": "local-mac", "status": "Running", "ipAddress": "10.0.0.2"},
+		{"id": "5b0e7f4c-0000-4000-8000-000000000002", "name": "db-1", "clusterId": "local-mac", "status": "Stopped", "ipAddress": nil},
 	}
 	fake.clusters = []map[string]any{{"id": "local-mac", "name": "Local Mac"}}
 	fake.templates = []map[string]any{{"id": "tpl-ubuntu", "name": "Ubuntu-22.04-Standard", "os": "Ubuntu 22.04", "diskGb": 10, "description": nil}}
@@ -160,6 +163,10 @@ func newFakeApi(t *testing.T) *fakeApi {
 	mux.HandleFunc("GET /v1/tenant/vms/{vmId}", func(w http.ResponseWriter, r *http.Request) {
 		id := r.PathValue("vmId")
 		answers := fake.vmReads[id]
+		if len(answers) > 0 && answers[0] == vmGone {
+			writeJSON(w, http.StatusNotFound, map[string]any{"status": 404, "title": "VM not found.", "code": "VM_NOT_FOUND"})
+			return
+		}
 		if len(answers) > 0 {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusOK)

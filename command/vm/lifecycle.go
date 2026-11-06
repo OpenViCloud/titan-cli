@@ -26,24 +26,44 @@ const (
 	retryPause     = 2 * time.Second
 )
 
-// goal is what a request ends in: once the VM has no request waiting (transition is null), reached says whether it
-// got there (titan-ops features/cli/design.md#vm-wait).
+// goal is what a request ends in: once the VM is settled (no request waiting on it), reached says whether it got
+// there (titan-ops features/cli/design.md#vm-wait).
 type goal struct {
 	want    string
-	reached func(vm *api.VmQueryResult) bool
+	reached func(status api.VmStatus) bool
+	// anyReasonFails: a new VM carries no failure reason until its create gives up, and the VM may still go on to
+	// Running after that (the instance exists, the reconciler reads it), so a reason ends the wait as a failure.
+	// Not for start or stop: a reason left by an earlier request stays until a later one succeeds.
+	anyReasonFails bool
 }
 
 var (
-	running = goal{want: "Running or Ready", reached: func(vm *api.VmQueryResult) bool {
-		return vm.CurrentState != nil && (*vm.CurrentState == api.VmStateRunning || *vm.CurrentState == api.VmStateReady)
+	running = goal{want: "Running or Ready", reached: func(status api.VmStatus) bool {
+		return status == api.VmStatusRunning || status == api.VmStatusReady
 	}}
-	stopped = goal{want: "Stopped", reached: func(vm *api.VmQueryResult) bool {
-		return vm.CurrentState != nil && *vm.CurrentState == api.VmStateStopped
+	createdGoal = goal{want: running.want, reached: running.reached, anyReasonFails: true}
+	stopped     = goal{want: "Stopped", reached: func(status api.VmStatus) bool {
+		return status == api.VmStatusStopped
 	}}
-	deleted = goal{want: "deleted", reached: func(vm *api.VmQueryResult) bool {
-		return vm.CurrentExistence != nil && *vm.CurrentExistence == api.CurrentExistenceDeleted
+	deleted = goal{want: "deleted", reached: func(status api.VmStatus) bool {
+		return status == api.VmStatusDeleted
 	}}
 )
+
+// settled says no request waits on the VM and its status is not Unknown: an Incus word, or NotFound, Failed, Deleted.
+// Unknown is waited out like a pending request (the next observation replaces it), and so is a status word the CLI
+// does not know: the API may add words without breaking /v1.
+func settled(vm *api.VmQueryResult) bool {
+	if vm.Status == nil {
+		return false
+	}
+	switch *vm.Status {
+	case api.VmStatusRunning, api.VmStatusReady, api.VmStatusStopped, api.VmStatusFrozen, api.VmStatusError,
+		api.VmStatusNotFound, api.VmStatusFailed, api.VmStatusDeleted:
+		return true
+	}
+	return false
+}
 
 type waitFlags struct {
 	wait    bool
@@ -72,9 +92,9 @@ func newList(deps *command.Deps) *cobra.Command {
 			rows := [][]string{}
 			for _, vm := range vms {
 				rows = append(rows, []string{output.Text(vm.Name), output.Text(vm.Id), output.Text(vm.ClusterId),
-					output.Word(vm.CurrentState), output.Word(vm.Transition), output.Text(vm.IpAddress)})
+					output.Word(vm.Status), output.Text(vm.IpAddress)})
 			}
-			return deps.Printer.Table([]string{"NAME", "ID", "CLUSTER", "STATE", "WAITING FOR", "IPV4"}, rows, vms)
+			return deps.Printer.Table([]string{"NAME", "ID", "CLUSTER", "STATUS", "IPV4"}, rows, vms)
 		},
 	}
 }
@@ -155,8 +175,8 @@ func newCreate(deps *command.Deps) *cobra.Command {
 				deps.Printer.Message("Creating VM %s.", body.Name)
 				return deps.Printer.Object([]output.Field{{Name: "ID", Value: id}}, created)
 			}
-			deps.Printer.Message("Creating VM %s, waiting until it is %s...", body.Name, running.want)
-			vm, err := waitFor(ctx, deps, client, id, body.Name, running, flags.timeout)
+			deps.Printer.Message("Creating VM %s, waiting until it is %s...", body.Name, createdGoal.want)
+			vm, err := waitFor(ctx, deps, client, id, body.Name, createdGoal, flags.timeout)
 			if err != nil {
 				return err
 			}
@@ -321,31 +341,55 @@ func newDelete(deps *command.Deps) *cobra.Command {
 		}})
 }
 
-// waitFor reads the VM until it has no request waiting, then says whether the request reached its goal.
+// waitFor reads the VM until it is settled, then says whether the request reached its goal. A deleted VM may answer
+// 404 instead of status Deleted; the VM it returns is then nil.
 func waitFor(ctx context.Context, deps *command.Deps, client *api.ClientWithResponses, id string, name string, g goal, timeout time.Duration) (*api.VmQueryResult, error) {
 	var last *api.VmQueryResult
+	gone := false
 	err := wait.Until(ctx, deps.Clock, timeout, pollInterval, func(ctx context.Context) (bool, error) {
-		vm, err := get(ctx, client, id)
+		response, err := client.TitanInfrastructureEndpointsVmGetVmEndpointWithResponse(ctx, id)
 		if err != nil {
 			return false, err
 		}
-		last = vm
-		return vm.Transition == nil, nil
+		if response.StatusCode() == http.StatusNotFound {
+			gone = true
+			return true, nil
+		}
+		if response.JSON200 == nil {
+			return false, output.Explain(api.ProblemOf(response.HTTPResponse, response.Body))
+		}
+		last = response.JSON200
+		if g.anyReasonFails && last.RequestFailureReason != nil {
+			return true, nil
+		}
+		return settled(last), nil
 	})
 	if errors.Is(err, wait.ErrTimeout) {
-		return nil, fmt.Errorf("VM %s is still %s after %s: the request goes on, check it with `openvicloud vm get %s`",
-			name, output.Word(last.Transition), timeout, name)
+		return nil, fmt.Errorf("VM %s is still %s after %s, check it with `openvicloud vm get %s`",
+			name, output.Word(last.Status), timeout, name)
 	}
 	if err != nil {
 		return nil, err
 	}
-	if g.reached(last) {
+	if gone {
+		if g.reached(api.VmStatusDeleted) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("VM %s no longer exists", name)
+	}
+	if g.anyReasonFails && last.RequestFailureReason != nil {
+		return nil, fmt.Errorf("the request for VM %s failed: %s", name, *last.RequestFailureReason)
+	}
+	if g.reached(*last.Status) {
 		return last, nil
 	}
 	if last.RequestFailureReason != nil {
 		return nil, fmt.Errorf("the request for VM %s failed: %s", name, *last.RequestFailureReason)
 	}
-	return nil, fmt.Errorf("VM %s is %s, not %s: the request did not complete", name, output.Word(last.CurrentState), g.want)
+	if *last.Status == api.VmStatusNotFound {
+		return nil, fmt.Errorf("VM %s is NotFound, not %s: Incus no longer has its instance", name, g.want)
+	}
+	return nil, fmt.Errorf("VM %s is %s, not %s: the request did not complete", name, output.Word(last.Status), g.want)
 }
 
 func list(ctx context.Context, client *api.ClientWithResponses) ([]api.VmQueryResult, error) {
@@ -375,9 +419,7 @@ func printVm(deps *command.Deps, vm *api.VmQueryResult) error {
 		{Name: "ID", Value: output.Text(vm.Id)},
 		{Name: "Name", Value: output.Text(vm.Name)},
 		{Name: "Cluster", Value: output.Text(vm.ClusterId)},
-		{Name: "State", Value: output.Word(vm.CurrentState)},
-		{Name: "Requested state", Value: output.Word(vm.DesiredState)},
-		{Name: "Waiting for", Value: output.Word(vm.Transition)},
+		{Name: "Status", Value: output.Word(vm.Status)},
 		{Name: "IPv4", Value: output.Text(vm.IpAddress)},
 		{Name: "Public IPv6", Value: output.Text(vm.PublicIpv6Address)},
 		{Name: "Network", Value: output.Text(vm.NetworkId)},

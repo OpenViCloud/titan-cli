@@ -2738,30 +2738,8 @@
           "name": {
             "type": "string"
           },
-          "currentState": {
-            "nullable": true,
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/VmState"
-              }
-            ]
-          },
-          "desiredState": {
-            "$ref": "#/components/schemas/VmDesiredState"
-          },
-          "currentExistence": {
-            "$ref": "#/components/schemas/CurrentExistence"
-          },
-          "desiredExistence": {
-            "$ref": "#/components/schemas/DesiredExistence"
-          },
-          "transition": {
-            "nullable": true,
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/VmTransition"
-              }
-            ]
+          "status": {
+            "$ref": "#/components/schemas/VmStatus"
           },
           "ipAddress": {
             "type": "string",
@@ -2807,50 +2785,38 @@
           }
         }
       },
-      "VmState": {
-        "type": "string",
-        "description": "",
-        "x-enumNames": [
-          "Running",
-          "Ready",
-          "Stopped",
-          "Frozen",
-          "Error"
-        ],
-        "enum": [
-          "Running",
-          "Ready",
-          "Stopped",
-          "Frozen",
-          "Error"
-        ]
-      },
-      "VmDesiredState": {
-        "type": "string",
-        "description": "",
-        "x-enumNames": [
-          "Running",
-          "Stopped"
-        ],
-        "enum": [
-          "Running",
-          "Stopped"
-        ]
-      },
-      "VmTransition": {
+      "VmStatus": {
         "type": "string",
         "description": "",
         "x-enumNames": [
           "Creating",
           "Starting",
           "Stopping",
-          "Deleting"
+          "Deleting",
+          "Running",
+          "Ready",
+          "Stopped",
+          "Frozen",
+          "Error",
+          "Unknown",
+          "NotFound",
+          "Failed",
+          "Deleted"
         ],
         "enum": [
           "Creating",
           "Starting",
           "Stopping",
-          "Deleting"
+          "Deleting",
+          "Running",
+          "Ready",
+          "Stopped",
+          "Frozen",
+          "Error",
+          "Unknown",
+          "NotFound",
+          "Failed",
+          "Deleted"
         ]
       },
       "RenameVmBody": {
