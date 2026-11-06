@@ -107,19 +107,20 @@ const (
 
 // Defines values for VmStatus.
 const (
-	VmStatusCreating VmStatus = "Creating"
-	VmStatusDeleted  VmStatus = "Deleted"
-	VmStatusDeleting VmStatus = "Deleting"
-	VmStatusError    VmStatus = "Error"
-	VmStatusFailed   VmStatus = "Failed"
-	VmStatusFrozen   VmStatus = "Frozen"
-	VmStatusNotFound VmStatus = "NotFound"
-	VmStatusReady    VmStatus = "Ready"
-	VmStatusRunning  VmStatus = "Running"
-	VmStatusStarting VmStatus = "Starting"
-	VmStatusStopped  VmStatus = "Stopped"
-	VmStatusStopping VmStatus = "Stopping"
-	VmStatusUnknown  VmStatus = "Unknown"
+	VmStatusCreating     VmStatus = "Creating"
+	VmStatusDeleted      VmStatus = "Deleted"
+	VmStatusDeleting     VmStatus = "Deleting"
+	VmStatusError        VmStatus = "Error"
+	VmStatusFailed       VmStatus = "Failed"
+	VmStatusFrozen       VmStatus = "Frozen"
+	VmStatusNotFound     VmStatus = "NotFound"
+	VmStatusReady        VmStatus = "Ready"
+	VmStatusRunning      VmStatus = "Running"
+	VmStatusSnapshotting VmStatus = "Snapshotting"
+	VmStatusStarting     VmStatus = "Starting"
+	VmStatusStopped      VmStatus = "Stopped"
+	VmStatusStopping     VmStatus = "Stopping"
+	VmStatusUnknown      VmStatus = "Unknown"
 )
 
 // Defines values for VolumeSnapshotTransition.
