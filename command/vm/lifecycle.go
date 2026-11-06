@@ -50,10 +50,9 @@ var (
 	}}
 )
 
-// settled says no request is waiting on the VM and its status will not change by itself: an Incus word, or NotFound,
-// Failed, Deleted. Unknown is waited out
-// like a pending request (the next observation replaces it), and so is a status word the CLI does not know: the API
-// may add words without breaking /v1.
+// settled says no request waits on the VM and its status is not Unknown: an Incus word, or NotFound, Failed, Deleted.
+// Unknown is waited out like a pending request (the next observation replaces it), and so is a status word the CLI
+// does not know: the API may add words without breaking /v1.
 func settled(vm *api.VmQueryResult) bool {
 	if vm.Status == nil {
 		return false

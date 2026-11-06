@@ -356,7 +356,8 @@ func TestVmStart_Wait_AReasonLeftByAnEarlierRequest_DoesNotFailIt(t *testing.T) 
 	stale := `"An earlier stop gave up."`
 	h.api.vmReads = map[string][]string{db1: {
 		strings.Replace(vmRead("Starting", "null", stale), createdVmId, db1, 1),
-		strings.Replace(vmRead("Running", "null", stale), createdVmId, db1, 1),
+		// A start that succeeds clears the reason; the read before it still carries the old one.
+		strings.Replace(vmRead("Running", "null", "null"), createdVmId, db1, 1),
 	}}
 
 	err := h.run("vm", "start", "db-1", "--wait")
