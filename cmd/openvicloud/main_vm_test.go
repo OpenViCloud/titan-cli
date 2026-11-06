@@ -301,6 +301,24 @@ func TestVmStop_Wait_RequestGaveUp_FailsWithTheState(t *testing.T) {
 	}
 }
 
+// A status the CLI did not wait on before is still a wait: Snapshotting is a snapshot create or revert running on the
+// instance, and --wait polls past it to the Incus word the VM returns to.
+func TestVmStop_Wait_PollsPastSnapshotting_ThenEndsStopped(t *testing.T) {
+	h := newHarness(t)
+	h.login()
+	web1 := "5b0e7f4c-0000-4000-8000-000000000001"
+	h.api.vmReads = map[string][]string{web1: {
+		strings.Replace(vmRead("Snapshotting", "null", "null"), createdVmId, web1, 1),
+		strings.Replace(vmRead("Stopped", "null", "null"), createdVmId, web1, 1),
+	}}
+
+	err := h.run("vm", "stop", "web-1", "--wait")
+
+	if err != nil {
+		t.Fatalf("vm stop --wait: %v", err)
+	}
+}
+
 func TestVmDelete_Wait_UntilDeleted(t *testing.T) {
 	h := newHarness(t)
 	h.login()
