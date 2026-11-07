@@ -97,11 +97,15 @@ const (
 	TopUpStatusPending   TopUpStatus = "Pending"
 )
 
-// Defines values for VmSnapshotTransition.
+// Defines values for VmSnapshotStatus.
 const (
-	VmSnapshotTransitionCreating  VmSnapshotTransition = "Creating"
-	VmSnapshotTransitionDeleting  VmSnapshotTransition = "Deleting"
-	VmSnapshotTransitionReverting VmSnapshotTransition = "Reverting"
+	VmSnapshotStatusAvailable VmSnapshotStatus = "Available"
+	VmSnapshotStatusCreating  VmSnapshotStatus = "Creating"
+	VmSnapshotStatusDeleted   VmSnapshotStatus = "Deleted"
+	VmSnapshotStatusDeleting  VmSnapshotStatus = "Deleting"
+	VmSnapshotStatusFailed    VmSnapshotStatus = "Failed"
+	VmSnapshotStatusNotFound  VmSnapshotStatus = "NotFound"
+	VmSnapshotStatusReverting VmSnapshotStatus = "Reverting"
 )
 
 // Defines values for VmStatus.
@@ -603,18 +607,16 @@ type VmQueryResult struct {
 
 // VmSnapshotQueryResult defines model for VmSnapshotQueryResult.
 type VmSnapshotQueryResult struct {
-	CreatedAt            *time.Time            `json:"createdAt,omitempty"`
-	CurrentExistence     *CurrentExistence     `json:"currentExistence,omitempty"`
-	DesiredExistence     *DesiredExistence     `json:"desiredExistence,omitempty"`
-	Id                   *string               `json:"id,omitempty"`
-	Name                 *string               `json:"name,omitempty"`
-	RequestFailedAt      *time.Time            `json:"requestFailedAt"`
-	RequestFailureReason *string               `json:"requestFailureReason"`
-	Transition           *VmSnapshotTransition `json:"transition"`
+	CreatedAt            *time.Time        `json:"createdAt,omitempty"`
+	Id                   *string           `json:"id,omitempty"`
+	Name                 *string           `json:"name,omitempty"`
+	RequestFailedAt      *time.Time        `json:"requestFailedAt"`
+	RequestFailureReason *string           `json:"requestFailureReason"`
+	Status               *VmSnapshotStatus `json:"status,omitempty"`
 }
 
-// VmSnapshotTransition defines model for VmSnapshotTransition.
-type VmSnapshotTransition string
+// VmSnapshotStatus defines model for VmSnapshotStatus.
+type VmSnapshotStatus string
 
 // VmStatus defines model for VmStatus.
 type VmStatus string

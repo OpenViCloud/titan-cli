@@ -2614,19 +2614,8 @@
           "name": {
             "type": "string"
           },
-          "currentExistence": {
-            "$ref": "#/components/schemas/CurrentExistence"
-          },
-          "desiredExistence": {
-            "$ref": "#/components/schemas/DesiredExistence"
-          },
-          "transition": {
-            "nullable": true,
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/VmSnapshotTransition"
-              }
-            ]
+          "status": {
+            "$ref": "#/components/schemas/VmSnapshotStatus"
           },
           "createdAt": {
             "type": "string",
@@ -2643,18 +2632,26 @@
           }
         }
       },
-      "VmSnapshotTransition": {
+      "VmSnapshotStatus": {
         "type": "string",
         "description": "",
         "x-enumNames": [
           "Creating",
           "Reverting",
-          "Deleting"
+          "Deleting",
+          "Available",
+          "NotFound",
+          "Failed",
+          "Deleted"
         ],
         "enum": [
           "Creating",
           "Reverting",
-          "Deleting"
+          "Deleting",
+          "Available",
+          "NotFound",
+          "Failed",
+          "Deleted"
         ]
       },
       "CreateVmCommandResult": {
