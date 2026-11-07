@@ -41,17 +41,17 @@ const (
 	FirewallPolicyDeny  FirewallPolicy = 1
 )
 
-// Defines values for FirewallRuleState.
+// Defines values for FirewallRuleStatus.
 const (
-	FirewallRuleStateDisabled FirewallRuleState = "disabled"
-	FirewallRuleStateEnabled  FirewallRuleState = "enabled"
-	FirewallRuleStateLogged   FirewallRuleState = "logged"
-)
-
-// Defines values for FirewallRuleTransition.
-const (
-	FirewallRuleTransitionCreating FirewallRuleTransition = "Creating"
-	FirewallRuleTransitionDeleting FirewallRuleTransition = "Deleting"
+	FirewallRuleStatusCreating FirewallRuleStatus = "Creating"
+	FirewallRuleStatusDeleted  FirewallRuleStatus = "Deleted"
+	FirewallRuleStatusDeleting FirewallRuleStatus = "Deleting"
+	FirewallRuleStatusDisabled FirewallRuleStatus = "disabled"
+	FirewallRuleStatusEnabled  FirewallRuleStatus = "enabled"
+	FirewallRuleStatusFailed   FirewallRuleStatus = "Failed"
+	FirewallRuleStatusLogged   FirewallRuleStatus = "logged"
+	FirewallRuleStatusNotFound FirewallRuleStatus = "NotFound"
+	FirewallRuleStatusUnknown  FirewallRuleStatus = "Unknown"
 )
 
 // Defines values for InvoiceDisplayStatus.
@@ -72,16 +72,15 @@ const (
 // Defines values for NetworkStatus.
 const (
 	NetworkStatusCreated     NetworkStatus = "Created"
+	NetworkStatusCreating    NetworkStatus = "Creating"
+	NetworkStatusDeleted     NetworkStatus = "Deleted"
+	NetworkStatusDeleting    NetworkStatus = "Deleting"
 	NetworkStatusErrored     NetworkStatus = "Errored"
+	NetworkStatusFailed      NetworkStatus = "Failed"
+	NetworkStatusNotFound    NetworkStatus = "NotFound"
 	NetworkStatusPending     NetworkStatus = "Pending"
 	NetworkStatusUnavailable NetworkStatus = "Unavailable"
 	NetworkStatusUnknown     NetworkStatus = "Unknown"
-)
-
-// Defines values for NetworkTransition.
-const (
-	NetworkTransitionCreating NetworkTransition = "Creating"
-	NetworkTransitionDeleting NetworkTransition = "Deleting"
 )
 
 // Defines values for TenantStatus.
@@ -299,27 +298,21 @@ type FirewallPolicy int
 
 // FirewallRuleQueryResult defines model for FirewallRuleQueryResult.
 type FirewallRuleQueryResult struct {
-	Cidr                 *string                 `json:"cidr,omitempty"`
-	CreatedAt            *time.Time              `json:"createdAt,omitempty"`
-	CurrentExistence     *CurrentExistence       `json:"currentExistence,omitempty"`
-	CurrentState         *FirewallRuleState      `json:"currentState"`
-	DesiredExistence     *DesiredExistence       `json:"desiredExistence,omitempty"`
-	Direction            *string                 `json:"direction,omitempty"`
-	EndPort              *int32                  `json:"endPort"`
-	ExternalId           *string                 `json:"externalId"`
-	Id                   *string                 `json:"id,omitempty"`
-	Protocol             *string                 `json:"protocol,omitempty"`
-	RequestFailedAt      *time.Time              `json:"requestFailedAt"`
-	RequestFailureReason *string                 `json:"requestFailureReason"`
-	StartPort            *int32                  `json:"startPort"`
-	Transition           *FirewallRuleTransition `json:"transition"`
+	Cidr                 *string             `json:"cidr,omitempty"`
+	CreatedAt            *time.Time          `json:"createdAt,omitempty"`
+	Direction            *string             `json:"direction,omitempty"`
+	EndPort              *int32              `json:"endPort"`
+	ExternalId           *string             `json:"externalId"`
+	Id                   *string             `json:"id,omitempty"`
+	Protocol             *string             `json:"protocol,omitempty"`
+	RequestFailedAt      *time.Time          `json:"requestFailedAt"`
+	RequestFailureReason *string             `json:"requestFailureReason"`
+	StartPort            *int32              `json:"startPort"`
+	Status               *FirewallRuleStatus `json:"status,omitempty"`
 }
 
-// FirewallRuleState defines model for FirewallRuleState.
-type FirewallRuleState string
-
-// FirewallRuleTransition defines model for FirewallRuleTransition.
-type FirewallRuleTransition string
+// FirewallRuleStatus defines model for FirewallRuleStatus.
+type FirewallRuleStatus string
 
 // InvoiceDetailQueryResult defines model for InvoiceDetailQueryResult.
 type InvoiceDetailQueryResult struct {
@@ -422,29 +415,23 @@ type LoadBalancerTransition string
 
 // NetworkQueryResult defines model for NetworkQueryResult.
 type NetworkQueryResult struct {
-	Cidr                 *string            `json:"cidr"`
-	ClusterId            *string            `json:"clusterId,omitempty"`
-	CreatedAt            *time.Time         `json:"createdAt,omitempty"`
-	CurrentExistence     *CurrentExistence  `json:"currentExistence,omitempty"`
-	CurrentState         *NetworkStatus     `json:"currentState"`
-	DefaultEgressPolicy  *string            `json:"defaultEgressPolicy,omitempty"`
-	DefaultIngressPolicy *string            `json:"defaultIngressPolicy,omitempty"`
-	DesiredExistence     *DesiredExistence  `json:"desiredExistence,omitempty"`
-	ExternalId           *string            `json:"externalId"`
-	Gateway              *string            `json:"gateway"`
-	Id                   *string            `json:"id,omitempty"`
-	Name                 *string            `json:"name,omitempty"`
-	PublicIpv6Subnet     *string            `json:"publicIpv6Subnet"`
-	RequestFailedAt      *time.Time         `json:"requestFailedAt"`
-	RequestFailureReason *string            `json:"requestFailureReason"`
-	Transition           *NetworkTransition `json:"transition"`
+	Cidr                 *string        `json:"cidr"`
+	ClusterId            *string        `json:"clusterId,omitempty"`
+	CreatedAt            *time.Time     `json:"createdAt,omitempty"`
+	DefaultEgressPolicy  *string        `json:"defaultEgressPolicy,omitempty"`
+	DefaultIngressPolicy *string        `json:"defaultIngressPolicy,omitempty"`
+	ExternalId           *string        `json:"externalId"`
+	Gateway              *string        `json:"gateway"`
+	Id                   *string        `json:"id,omitempty"`
+	Name                 *string        `json:"name,omitempty"`
+	PublicIpv6Subnet     *string        `json:"publicIpv6Subnet"`
+	RequestFailedAt      *time.Time     `json:"requestFailedAt"`
+	RequestFailureReason *string        `json:"requestFailureReason"`
+	Status               *NetworkStatus `json:"status,omitempty"`
 }
 
 // NetworkStatus defines model for NetworkStatus.
 type NetworkStatus string
-
-// NetworkTransition defines model for NetworkTransition.
-type NetworkTransition string
 
 // OsImageInfo defines model for OsImageInfo.
 type OsImageInfo struct {

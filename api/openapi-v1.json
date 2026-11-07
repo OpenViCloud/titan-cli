@@ -3171,27 +3171,8 @@
             "type": "string",
             "nullable": true
           },
-          "currentState": {
-            "nullable": true,
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/NetworkStatus"
-              }
-            ]
-          },
-          "currentExistence": {
-            "$ref": "#/components/schemas/CurrentExistence"
-          },
-          "desiredExistence": {
-            "$ref": "#/components/schemas/DesiredExistence"
-          },
-          "transition": {
-            "nullable": true,
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/NetworkTransition"
-              }
-            ]
+          "status": {
+            "$ref": "#/components/schemas/NetworkStatus"
           },
           "requestFailureReason": {
             "type": "string",
@@ -3222,30 +3203,28 @@
         "type": "string",
         "description": "",
         "x-enumNames": [
+          "Creating",
+          "Deleting",
           "Pending",
           "Created",
           "Errored",
+          "Unavailable",
           "Unknown",
-          "Unavailable"
+          "NotFound",
+          "Failed",
+          "Deleted"
         ],
         "enum": [
+          "Creating",
+          "Deleting",
           "Pending",
           "Created",
           "Errored",
+          "Unavailable",
           "Unknown",
-          "Unavailable"
-        ]
-      },
-      "NetworkTransition": {
-        "type": "string",
-        "description": "",
-        "x-enumNames": [
-          "Creating",
-          "Deleting"
-        ],
-        "enum": [
-          "Creating",
-          "Deleting"
+          "NotFound",
+          "Failed",
+          "Deleted"
         ]
       },
       "FirewallRuleQueryResult": {
@@ -3279,27 +3258,8 @@
             "type": "string",
             "nullable": true
           },
-          "currentState": {
-            "nullable": true,
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/FirewallRuleState"
-              }
-            ]
-          },
-          "currentExistence": {
-            "$ref": "#/components/schemas/CurrentExistence"
-          },
-          "desiredExistence": {
-            "$ref": "#/components/schemas/DesiredExistence"
-          },
-          "transition": {
-            "nullable": true,
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/FirewallRuleTransition"
-              }
-            ]
+          "status": {
+            "$ref": "#/components/schemas/FirewallRuleStatus"
           },
           "requestFailureReason": {
             "type": "string",
@@ -3316,30 +3276,30 @@
           }
         }
       },
-      "FirewallRuleState": {
-        "type": "string",
-        "description": "",
-        "x-enumNames": [
-          "enabled",
-          "disabled",
-          "logged"
-        ],
-        "enum": [
-          "enabled",
-          "disabled",
-          "logged"
-        ]
-      },
-      "FirewallRuleTransition": {
+      "FirewallRuleStatus": {
         "type": "string",
         "description": "",
         "x-enumNames": [
           "Creating",
-          "Deleting"
+          "Deleting",
+          "enabled",
+          "disabled",
+          "logged",
+          "Unknown",
+          "NotFound",
+          "Failed",
+          "Deleted"
         ],
         "enum": [
           "Creating",
-          "Deleting"
+          "Deleting",
+          "enabled",
+          "disabled",
+          "logged",
+          "Unknown",
+          "NotFound",
+          "Failed",
+          "Deleted"
         ]
       },
       "RenameNetworkRequest": {
