@@ -3386,19 +3386,8 @@
               "$ref": "#/components/schemas/LoadBalancerBackendQueryResult"
             }
           },
-          "currentExistence": {
-            "$ref": "#/components/schemas/CurrentExistence"
-          },
-          "desiredExistence": {
-            "$ref": "#/components/schemas/DesiredExistence"
-          },
-          "transition": {
-            "nullable": true,
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/LoadBalancerTransition"
-              }
-            ]
+          "status": {
+            "$ref": "#/components/schemas/LoadBalancerStatus"
           },
           "requestFailureReason": {
             "type": "string",
@@ -3442,46 +3431,26 @@
           }
         }
       },
-      "CurrentExistence": {
-        "type": "string",
-        "description": "",
-        "x-enumNames": [
-          "NotCreated",
-          "Exists",
-          "NotFound",
-          "Deleted"
-        ],
-        "enum": [
-          "NotCreated",
-          "Exists",
-          "NotFound",
-          "Deleted"
-        ]
-      },
-      "DesiredExistence": {
-        "type": "string",
-        "description": "",
-        "x-enumNames": [
-          "Exists",
-          "Deleted"
-        ],
-        "enum": [
-          "Exists",
-          "Deleted"
-        ]
-      },
-      "LoadBalancerTransition": {
+      "LoadBalancerStatus": {
         "type": "string",
         "description": "",
         "x-enumNames": [
           "Creating",
+          "Available",
           "Updating",
-          "Deleting"
+          "Deleting",
+          "NotFound",
+          "Failed",
+          "Deleted"
         ],
         "enum": [
           "Creating",
+          "Available",
           "Updating",
-          "Deleting"
+          "Deleting",
+          "NotFound",
+          "Failed",
+          "Deleted"
         ]
       },
       "RenameLoadBalancerBody": {
