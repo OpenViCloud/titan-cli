@@ -2343,19 +2343,8 @@
           "name": {
             "type": "string"
           },
-          "currentExistence": {
-            "$ref": "#/components/schemas/CurrentExistence"
-          },
-          "desiredExistence": {
-            "$ref": "#/components/schemas/DesiredExistence"
-          },
-          "transition": {
-            "nullable": true,
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/VolumeSnapshotTransition"
-              }
-            ]
+          "status": {
+            "$ref": "#/components/schemas/VolumeSnapshotStatus"
           },
           "externalId": {
             "type": "string",
@@ -2376,44 +2365,24 @@
           }
         }
       },
-      "CurrentExistence": {
-        "type": "string",
-        "description": "",
-        "x-enumNames": [
-          "NotCreated",
-          "Exists",
-          "NotFound",
-          "Deleted"
-        ],
-        "enum": [
-          "NotCreated",
-          "Exists",
-          "NotFound",
-          "Deleted"
-        ]
-      },
-      "DesiredExistence": {
-        "type": "string",
-        "description": "",
-        "x-enumNames": [
-          "Exists",
-          "Deleted"
-        ],
-        "enum": [
-          "Exists",
-          "Deleted"
-        ]
-      },
-      "VolumeSnapshotTransition": {
+      "VolumeSnapshotStatus": {
         "type": "string",
         "description": "",
         "x-enumNames": [
           "Creating",
-          "Deleting"
+          "Deleting",
+          "Available",
+          "NotFound",
+          "Failed",
+          "Deleted"
         ],
         "enum": [
           "Creating",
-          "Deleting"
+          "Deleting",
+          "Available",
+          "NotFound",
+          "Failed",
+          "Deleted"
         ]
       },
       "RestoreVolumeSnapshotCommandResult": {
@@ -2510,11 +2479,8 @@
           "name": {
             "type": "string"
           },
-          "currentExistence": {
-            "$ref": "#/components/schemas/CurrentExistence"
-          },
-          "desiredExistence": {
-            "$ref": "#/components/schemas/DesiredExistence"
+          "status": {
+            "$ref": "#/components/schemas/VolumeStatus"
           },
           "currentAttachedVmId": {
             "type": "string",
@@ -2528,14 +2494,6 @@
             "type": "string",
             "format": "guid",
             "nullable": true
-          },
-          "transition": {
-            "nullable": true,
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/VolumeTransition"
-              }
-            ]
           },
           "clusterId": {
             "type": "string"
@@ -2562,20 +2520,28 @@
           }
         }
       },
-      "VolumeTransition": {
+      "VolumeStatus": {
         "type": "string",
         "description": "",
         "x-enumNames": [
           "Creating",
           "Attaching",
           "Detaching",
-          "Deleting"
+          "Deleting",
+          "Available",
+          "NotFound",
+          "Failed",
+          "Deleted"
         ],
         "enum": [
           "Creating",
           "Attaching",
           "Detaching",
-          "Deleting"
+          "Deleting",
+          "Available",
+          "NotFound",
+          "Failed",
+          "Deleted"
         ]
       },
       "CreateVmSnapshotCommandResult": {
@@ -3475,6 +3441,34 @@
             "format": "guid"
           }
         }
+      },
+      "CurrentExistence": {
+        "type": "string",
+        "description": "",
+        "x-enumNames": [
+          "NotCreated",
+          "Exists",
+          "NotFound",
+          "Deleted"
+        ],
+        "enum": [
+          "NotCreated",
+          "Exists",
+          "NotFound",
+          "Deleted"
+        ]
+      },
+      "DesiredExistence": {
+        "type": "string",
+        "description": "",
+        "x-enumNames": [
+          "Exists",
+          "Deleted"
+        ],
+        "enum": [
+          "Exists",
+          "Deleted"
+        ]
       },
       "LoadBalancerTransition": {
         "type": "string",
