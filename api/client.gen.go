@@ -21,20 +21,6 @@ const (
 	JWTBearerAuthScopes = "JWTBearerAuth.Scopes"
 )
 
-// Defines values for CurrentExistence.
-const (
-	CurrentExistenceDeleted    CurrentExistence = "Deleted"
-	CurrentExistenceExists     CurrentExistence = "Exists"
-	CurrentExistenceNotCreated CurrentExistence = "NotCreated"
-	CurrentExistenceNotFound   CurrentExistence = "NotFound"
-)
-
-// Defines values for DesiredExistence.
-const (
-	DesiredExistenceDeleted DesiredExistence = "Deleted"
-	DesiredExistenceExists  DesiredExistence = "Exists"
-)
-
 // Defines values for FirewallPolicy.
 const (
 	FirewallPolicyAllow FirewallPolicy = 0
@@ -62,11 +48,15 @@ const (
 	InvoiceDisplayStatusSettled InvoiceDisplayStatus = "Settled"
 )
 
-// Defines values for LoadBalancerTransition.
+// Defines values for LoadBalancerStatus.
 const (
-	LoadBalancerTransitionCreating LoadBalancerTransition = "Creating"
-	LoadBalancerTransitionDeleting LoadBalancerTransition = "Deleting"
-	LoadBalancerTransitionUpdating LoadBalancerTransition = "Updating"
+	LoadBalancerStatusAvailable LoadBalancerStatus = "Available"
+	LoadBalancerStatusCreating  LoadBalancerStatus = "Creating"
+	LoadBalancerStatusDeleted   LoadBalancerStatus = "Deleted"
+	LoadBalancerStatusDeleting  LoadBalancerStatus = "Deleting"
+	LoadBalancerStatusFailed    LoadBalancerStatus = "Failed"
+	LoadBalancerStatusNotFound  LoadBalancerStatus = "NotFound"
+	LoadBalancerStatusUpdating  LoadBalancerStatus = "Updating"
 )
 
 // Defines values for NetworkStatus.
@@ -299,12 +289,6 @@ type CreateVolumeSnapshotCommandResult struct {
 	SnapshotId *string `json:"snapshotId,omitempty"`
 }
 
-// CurrentExistence defines model for CurrentExistence.
-type CurrentExistence string
-
-// DesiredExistence defines model for DesiredExistence.
-type DesiredExistence string
-
 // FirewallPolicy defines model for FirewallPolicy.
 type FirewallPolicy int
 
@@ -410,20 +394,18 @@ type LoadBalancerQueryResult struct {
 	Backends             *[]LoadBalancerBackendQueryResult  `json:"backends,omitempty"`
 	ClusterId            *string                            `json:"clusterId,omitempty"`
 	CreatedAt            *time.Time                         `json:"createdAt,omitempty"`
-	CurrentExistence     *CurrentExistence                  `json:"currentExistence,omitempty"`
-	DesiredExistence     *DesiredExistence                  `json:"desiredExistence,omitempty"`
 	Id                   *string                            `json:"id,omitempty"`
 	Listeners            *[]LoadBalancerListenerQueryResult `json:"listeners,omitempty"`
 	Name                 *string                            `json:"name,omitempty"`
 	NetworkId            *string                            `json:"networkId,omitempty"`
 	RequestFailedAt      *time.Time                         `json:"requestFailedAt"`
 	RequestFailureReason *string                            `json:"requestFailureReason"`
-	Transition           *LoadBalancerTransition            `json:"transition"`
+	Status               *LoadBalancerStatus                `json:"status,omitempty"`
 	Vip                  *string                            `json:"vip,omitempty"`
 }
 
-// LoadBalancerTransition defines model for LoadBalancerTransition.
-type LoadBalancerTransition string
+// LoadBalancerStatus defines model for LoadBalancerStatus.
+type LoadBalancerStatus string
 
 // NetworkQueryResult defines model for NetworkQueryResult.
 type NetworkQueryResult struct {
