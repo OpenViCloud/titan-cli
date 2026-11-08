@@ -126,18 +126,26 @@ const (
 	VmStatusUnknown      VmStatus = "Unknown"
 )
 
-// Defines values for VolumeSnapshotTransition.
+// Defines values for VolumeSnapshotStatus.
 const (
-	VolumeSnapshotTransitionCreating VolumeSnapshotTransition = "Creating"
-	VolumeSnapshotTransitionDeleting VolumeSnapshotTransition = "Deleting"
+	VolumeSnapshotStatusAvailable VolumeSnapshotStatus = "Available"
+	VolumeSnapshotStatusCreating  VolumeSnapshotStatus = "Creating"
+	VolumeSnapshotStatusDeleted   VolumeSnapshotStatus = "Deleted"
+	VolumeSnapshotStatusDeleting  VolumeSnapshotStatus = "Deleting"
+	VolumeSnapshotStatusFailed    VolumeSnapshotStatus = "Failed"
+	VolumeSnapshotStatusNotFound  VolumeSnapshotStatus = "NotFound"
 )
 
-// Defines values for VolumeTransition.
+// Defines values for VolumeStatus.
 const (
-	VolumeTransitionAttaching VolumeTransition = "Attaching"
-	VolumeTransitionCreating  VolumeTransition = "Creating"
-	VolumeTransitionDeleting  VolumeTransition = "Deleting"
-	VolumeTransitionDetaching VolumeTransition = "Detaching"
+	VolumeStatusAttaching VolumeStatus = "Attaching"
+	VolumeStatusAvailable VolumeStatus = "Available"
+	VolumeStatusCreating  VolumeStatus = "Creating"
+	VolumeStatusDeleted   VolumeStatus = "Deleted"
+	VolumeStatusDeleting  VolumeStatus = "Deleting"
+	VolumeStatusDetaching VolumeStatus = "Detaching"
+	VolumeStatusFailed    VolumeStatus = "Failed"
+	VolumeStatusNotFound  VolumeStatus = "NotFound"
 )
 
 // ActivityEventQueryResult defines model for ActivityEventQueryResult.
@@ -632,41 +640,37 @@ type VolumeOfferingQueryResult struct {
 
 // VolumeQueryResult defines model for VolumeQueryResult.
 type VolumeQueryResult struct {
-	ClusterId                *string           `json:"clusterId,omitempty"`
-	CreatedAt                *time.Time        `json:"createdAt,omitempty"`
-	CurrentAttachedElsewhere *bool             `json:"currentAttachedElsewhere,omitempty"`
-	CurrentAttachedVmId      *string           `json:"currentAttachedVmId"`
-	CurrentExistence         *CurrentExistence `json:"currentExistence,omitempty"`
-	DesiredAttachedVmId      *string           `json:"desiredAttachedVmId"`
-	DesiredExistence         *DesiredExistence `json:"desiredExistence,omitempty"`
-	Id                       *string           `json:"id,omitempty"`
-	Name                     *string           `json:"name,omitempty"`
-	RequestFailedAt          *time.Time        `json:"requestFailedAt"`
-	RequestFailureReason     *string           `json:"requestFailureReason"`
-	SizeGb                   *int32            `json:"sizeGb,omitempty"`
-	Transition               *VolumeTransition `json:"transition"`
-	VolumeOfferingId         *string           `json:"volumeOfferingId,omitempty"`
+	ClusterId                *string       `json:"clusterId,omitempty"`
+	CreatedAt                *time.Time    `json:"createdAt,omitempty"`
+	CurrentAttachedElsewhere *bool         `json:"currentAttachedElsewhere,omitempty"`
+	CurrentAttachedVmId      *string       `json:"currentAttachedVmId"`
+	DesiredAttachedVmId      *string       `json:"desiredAttachedVmId"`
+	Id                       *string       `json:"id,omitempty"`
+	Name                     *string       `json:"name,omitempty"`
+	RequestFailedAt          *time.Time    `json:"requestFailedAt"`
+	RequestFailureReason     *string       `json:"requestFailureReason"`
+	SizeGb                   *int32        `json:"sizeGb,omitempty"`
+	Status                   *VolumeStatus `json:"status,omitempty"`
+	VolumeOfferingId         *string       `json:"volumeOfferingId,omitempty"`
 }
 
 // VolumeSnapshotQueryResult defines model for VolumeSnapshotQueryResult.
 type VolumeSnapshotQueryResult struct {
-	CreatedAt            *time.Time                `json:"createdAt,omitempty"`
-	CurrentExistence     *CurrentExistence         `json:"currentExistence,omitempty"`
-	DesiredExistence     *DesiredExistence         `json:"desiredExistence,omitempty"`
-	ExternalId           *string                   `json:"externalId"`
-	Id                   *string                   `json:"id,omitempty"`
-	Name                 *string                   `json:"name,omitempty"`
-	RequestFailedAt      *time.Time                `json:"requestFailedAt"`
-	RequestFailureReason *string                   `json:"requestFailureReason"`
-	Transition           *VolumeSnapshotTransition `json:"transition"`
-	VolumeId             *string                   `json:"volumeId,omitempty"`
+	CreatedAt            *time.Time            `json:"createdAt,omitempty"`
+	ExternalId           *string               `json:"externalId"`
+	Id                   *string               `json:"id,omitempty"`
+	Name                 *string               `json:"name,omitempty"`
+	RequestFailedAt      *time.Time            `json:"requestFailedAt"`
+	RequestFailureReason *string               `json:"requestFailureReason"`
+	Status               *VolumeSnapshotStatus `json:"status,omitempty"`
+	VolumeId             *string               `json:"volumeId,omitempty"`
 }
 
-// VolumeSnapshotTransition defines model for VolumeSnapshotTransition.
-type VolumeSnapshotTransition string
+// VolumeSnapshotStatus defines model for VolumeSnapshotStatus.
+type VolumeSnapshotStatus string
 
-// VolumeTransition defines model for VolumeTransition.
-type VolumeTransition string
+// VolumeStatus defines model for VolumeStatus.
+type VolumeStatus string
 
 // WalletQueryResult defines model for WalletQueryResult.
 type WalletQueryResult struct {
