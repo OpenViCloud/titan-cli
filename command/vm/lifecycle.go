@@ -139,7 +139,7 @@ func newCreate(deps *command.Deps) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			body := api.CreateVmCommand{Name: args[0], ClusterId: cluster}
+			body := api.CreateVmCommand{Name: args[0], ClusterId: &cluster}
 			body.NetworkId, err = resolveNetwork(ctx, client, network)
 			if err != nil {
 				return err

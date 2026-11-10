@@ -2637,8 +2637,7 @@
           "name",
           "networkId",
           "vmOfferingId",
-          "templateId",
-          "clusterId"
+          "templateId"
         ],
         "properties": {
           "name": {
@@ -2666,8 +2665,7 @@
           },
           "clusterId": {
             "type": "string",
-            "minLength": 1,
-            "nullable": false
+            "nullable": true
           },
           "diskSizeGb": {
             "type": "integer",
@@ -3594,10 +3592,6 @@
           "name": {
             "type": "string"
           },
-          "cpu": {
-            "type": "number",
-            "format": "decimal"
-          },
           "vcpu": {
             "type": "integer",
             "format": "int32"
@@ -3621,13 +3615,6 @@
           },
           "name": {
             "type": "string"
-          },
-          "sizeGb": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "isCustomized": {
-            "type": "boolean"
           },
           "pricePerGbPerHour": {
             "type": "number",
