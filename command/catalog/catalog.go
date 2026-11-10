@@ -101,9 +101,9 @@ func NewSize(deps *command.Deps) *cobra.Command {
 			rows := [][]string{}
 			for _, size := range sizes {
 				rows = append(rows, []string{output.Text(size.Id), output.Text(size.Name), output.Int(size.Vcpu),
-					output.Number(size.Cpu), output.Int(size.MemoryMb), output.Number(size.PricePerHour)})
+					output.Int(size.MemoryMb), output.Number(size.PricePerHour)})
 			}
-			return deps.Printer.Table([]string{"ID", "NAME", "VCPU", "CPU", "MEMORY MB", "PRICE/HOUR"}, rows, sizes)
+			return deps.Printer.Table([]string{"ID", "NAME", "VCPU", "MEMORY MB", "PRICE/HOUR"}, rows, sizes)
 		},
 	})
 	return size

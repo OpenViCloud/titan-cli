@@ -246,7 +246,7 @@ type CreateSnapshotBody struct {
 
 // CreateVmCommand defines model for CreateVmCommand.
 type CreateVmCommand struct {
-	ClusterId    string    `json:"clusterId"`
+	ClusterId    *string   `json:"clusterId"`
 	DiskSizeGb   *int32    `json:"diskSizeGb"`
 	Name         string    `json:"name"`
 	NetworkId    string    `json:"networkId"`
@@ -569,7 +569,6 @@ type VmCostSummaryLine struct {
 
 // VmOfferingQueryResult defines model for VmOfferingQueryResult.
 type VmOfferingQueryResult struct {
-	Cpu          *json.Number `json:"cpu,omitempty"`
 	Id           *string      `json:"id,omitempty"`
 	MemoryMb     *int32       `json:"memoryMb,omitempty"`
 	Name         *string      `json:"name,omitempty"`
@@ -614,10 +613,8 @@ type VmStatus string
 // VolumeOfferingQueryResult defines model for VolumeOfferingQueryResult.
 type VolumeOfferingQueryResult struct {
 	Id                *string      `json:"id,omitempty"`
-	IsCustomized      *bool        `json:"isCustomized,omitempty"`
 	Name              *string      `json:"name,omitempty"`
 	PricePerGbPerHour *json.Number `json:"pricePerGbPerHour,omitempty"`
-	SizeGb            *int32       `json:"sizeGb,omitempty"`
 }
 
 // VolumeQueryResult defines model for VolumeQueryResult.

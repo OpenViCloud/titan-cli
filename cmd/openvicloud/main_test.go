@@ -148,7 +148,7 @@ func newFakeApi(t *testing.T) *fakeApi {
 	}
 	fake.clusters = []map[string]any{{"id": "local-mac", "name": "Local Mac"}}
 	fake.templates = []map[string]any{{"id": "tpl-ubuntu", "name": "Ubuntu-22.04-Standard", "os": "Ubuntu 22.04", "diskGb": 10, "description": nil}}
-	fake.sizes = []map[string]any{{"id": "m", "name": "Medium", "cpu": json.Number("1.5"), "vcpu": 2, "memoryMb": 4096, "pricePerHour": json.Number("0.0123456789")}}
+	fake.sizes = []map[string]any{{"id": "m", "name": "Medium", "vcpu": 2, "memoryMb": 4096, "pricePerHour": json.Number("0.0123456789")}}
 	fake.networks = []map[string]any{{"id": "9a1d0000-0000-4000-8000-000000000001", "name": "app-net", "clusterId": "local-mac"}}
 	fake.sshKeys = []map[string]any{{"id": "c3c30000-0000-4000-8000-000000000001", "name": "laptop", "type": "ssh-ed25519", "fingerprint": "SHA256:abc"}}
 	mux.HandleFunc("GET /v1/clusters", func(w http.ResponseWriter, r *http.Request) { writeJSON(w, http.StatusOK, fake.clusters) })
