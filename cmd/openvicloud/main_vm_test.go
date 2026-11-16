@@ -194,6 +194,90 @@ func TestVmCreate_UnknownSshKey_SaysSo_AndCreatesNothing(t *testing.T) {
 	}
 }
 
+// titan-ops features/vm/user-stories.md#us-ssh-4: the console password comes from stdin, never from the command line,
+// and is never printed.
+
+func TestVmCreate_ConsolePasswordStdin_SendsWhatStdinHolds_WithoutItsLineEnd(t *testing.T) {
+	for _, tc := range []struct{ stdin, want string }{
+		{"correct horse battery\n", "correct horse battery"},
+		{"  spaces stay inside \r\n", "  spaces stay inside "},
+		{"no line end at all", "no line end at all"},
+	} {
+		h := newHarness(t)
+		h.login()
+		h.deps.Stdin = strings.NewReader(tc.stdin)
+
+		err := h.run("vm", "create", "web-2", "--cluster", "local-mac", "--network", "app-net",
+			"--template", "tpl-ubuntu", "--size", "m", "--console-password-stdin")
+
+		if err != nil {
+			t.Fatalf("vm create with %q: %v", tc.stdin, err)
+		}
+		got := lastWrite(t, h).Body["consolePassword"]
+		if got != tc.want {
+			t.Fatalf("consolePassword = %q, want %q", got, tc.want)
+		}
+		for label, text := range map[string]string{"stdout": h.stdout.String(), "stderr": h.stderr.String()} {
+			if strings.Contains(text, tc.want) {
+				t.Fatalf("%s shows the password: %s", label, text)
+			}
+		}
+	}
+}
+
+func TestVmCreate_WithoutTheFlag_SendsNoConsolePassword_AndReadsNoStdin(t *testing.T) {
+	h := newHarness(t)
+	h.login()
+	stdin := strings.NewReader("not a password\n")
+	h.deps.Stdin = stdin
+
+	err := h.run("vm", "create", "web-2", "--cluster", "local-mac", "--network", "app-net", "--template", "tpl-ubuntu", "--size", "m")
+
+	if err != nil {
+		t.Fatalf("vm create: %v", err)
+	}
+	// The generated client sends a field it has no value for as null, which the API reads as no password.
+	if lastWrite(t, h).Body["consolePassword"] != nil {
+		t.Fatalf("body = %v", lastWrite(t, h).Body)
+	}
+	if stdin.Len() != len("not a password\n") {
+		t.Fatalf("stdin was read")
+	}
+}
+
+func TestVmCreate_ConsolePasswordStdin_Empty_SaysSo_AndCreatesNothing(t *testing.T) {
+	for _, stdin := range []string{"", "\n"} {
+		h := newHarness(t)
+		h.login()
+		h.deps.Stdin = strings.NewReader(stdin)
+
+		err := h.run("vm", "create", "web-2", "--cluster", "local-mac", "--network", "app-net",
+			"--template", "tpl-ubuntu", "--size", "m", "--console-password-stdin")
+
+		if err == nil || !strings.Contains(err.Error(), "no console password on stdin") {
+			t.Fatalf("stdin %q: err = %v", stdin, err)
+		}
+		if len(h.api.writes) != 0 {
+			t.Fatalf("writes = %+v", h.api.writes)
+		}
+	}
+}
+
+func TestVmCreate_ConsolePasswordOnTheCommandLine_IsRefused_AndCreatesNothing(t *testing.T) {
+	h := newHarness(t)
+	h.login()
+
+	err := h.run("vm", "create", "web-2", "--cluster", "local-mac", "--network", "app-net",
+		"--template", "tpl-ubuntu", "--size", "m", "--console-password", "correct horse battery")
+
+	if err == nil || !strings.Contains(err.Error(), "unknown flag: --console-password") {
+		t.Fatalf("err = %v", err)
+	}
+	if len(h.api.writes) != 0 {
+		t.Fatalf("writes = %+v", h.api.writes)
+	}
+}
+
 // US-CLI-10 AC-4
 
 func TestVmCreate_AnswerLost_SendsAgainWithTheSameKey(t *testing.T) {

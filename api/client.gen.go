@@ -246,19 +246,25 @@ type CreateSnapshotBody struct {
 
 // CreateVmCommand defines model for CreateVmCommand.
 type CreateVmCommand struct {
-	ClusterId    *string   `json:"clusterId"`
-	DiskSizeGb   *int32    `json:"diskSizeGb"`
-	Name         string    `json:"name"`
-	NetworkId    string    `json:"networkId"`
-	SshKeyIds    *[]string `json:"sshKeyIds"`
-	TemplateId   string    `json:"templateId"`
-	UserData     *string   `json:"userData"`
-	VmOfferingId string    `json:"vmOfferingId"`
+	ClusterId       *string   `json:"clusterId"`
+	ConsolePassword *string   `json:"consolePassword"`
+	DiskSizeGb      *int32    `json:"diskSizeGb"`
+	Name            string    `json:"name"`
+	NetworkId       string    `json:"networkId"`
+	SshKeyIds       *[]string `json:"sshKeyIds"`
+	TemplateId      string    `json:"templateId"`
+	UserData        *string   `json:"userData"`
+	VmOfferingId    string    `json:"vmOfferingId"`
 }
 
 // CreateVmCommandResult defines model for CreateVmCommandResult.
 type CreateVmCommandResult struct {
 	VmId *string `json:"vmId,omitempty"`
+}
+
+// CreateVmConsoleTicketRequest defines model for CreateVmConsoleTicketRequest.
+type CreateVmConsoleTicketRequest struct {
+	Ticket string `json:"ticket"`
 }
 
 // CreateVmSnapshotCommandResult defines model for CreateVmSnapshotCommandResult.
@@ -567,6 +573,25 @@ type VmCostSummaryLine struct {
 	VmName    *string      `json:"vmName,omitempty"`
 }
 
+// VmMetricPointQueryResult defines model for VmMetricPointQueryResult.
+type VmMetricPointQueryResult struct {
+	At                      *time.Time `json:"at,omitempty"`
+	CpuPercent              *float64   `json:"cpuPercent"`
+	DiskReadBytesPerSecond  *float64   `json:"diskReadBytesPerSecond"`
+	DiskWriteBytesPerSecond *float64   `json:"diskWriteBytesPerSecond"`
+	MemoryTotalBytes        *int64     `json:"memoryTotalBytes"`
+	MemoryUsedBytes         *int64     `json:"memoryUsedBytes"`
+	RootFsSizeBytes         *int64     `json:"rootFsSizeBytes"`
+	RootFsUsedBytes         *int64     `json:"rootFsUsedBytes"`
+}
+
+// VmMetricsQueryResult defines model for VmMetricsQueryResult.
+type VmMetricsQueryResult struct {
+	Points      *[]VmMetricPointQueryResult `json:"points,omitempty"`
+	Range       *string                     `json:"range,omitempty"`
+	StepSeconds *int32                      `json:"stepSeconds,omitempty"`
+}
+
 // VmOfferingQueryResult defines model for VmOfferingQueryResult.
 type VmOfferingQueryResult struct {
 	Id           *string      `json:"id,omitempty"`
@@ -720,6 +745,11 @@ type TitanInfrastructureEndpointsVmCreateVmEndpointParams struct {
 	IdempotencyKey string `json:"Idempotency-Key"`
 }
 
+// TitanInfrastructureEndpointsVmGetVmMetricsEndpointParams defines parameters for TitanInfrastructureEndpointsVmGetVmMetricsEndpoint.
+type TitanInfrastructureEndpointsVmGetVmMetricsEndpointParams struct {
+	Range *string `form:"range,omitempty" json:"range,omitempty"`
+}
+
 // TitanInfrastructureEndpointsVmSnapshotsCreateSnapshotEndpointParams defines parameters for TitanInfrastructureEndpointsVmSnapshotsCreateSnapshotEndpoint.
 type TitanInfrastructureEndpointsVmSnapshotsCreateSnapshotEndpointParams struct {
 	// IdempotencyKey One value per logical submission; a retry with the same value replays the first response.
@@ -776,6 +806,9 @@ type TitanInfrastructureEndpointsVmCreateVmEndpointJSONRequestBody = CreateVmCom
 
 // TitanInfrastructureEndpointsVmUpdateVmEndpointJSONRequestBody defines body for TitanInfrastructureEndpointsVmUpdateVmEndpoint for application/json ContentType.
 type TitanInfrastructureEndpointsVmUpdateVmEndpointJSONRequestBody = RenameVmBody
+
+// TitanInfrastructureEndpointsVmCreateVmConsoleTicketEndpointJSONRequestBody defines body for TitanInfrastructureEndpointsVmCreateVmConsoleTicketEndpoint for application/json ContentType.
+type TitanInfrastructureEndpointsVmCreateVmConsoleTicketEndpointJSONRequestBody = CreateVmConsoleTicketRequest
 
 // TitanInfrastructureEndpointsVmSnapshotsCreateSnapshotEndpointJSONRequestBody defines body for TitanInfrastructureEndpointsVmSnapshotsCreateSnapshotEndpoint for application/json ContentType.
 type TitanInfrastructureEndpointsVmSnapshotsCreateSnapshotEndpointJSONRequestBody = CreateSnapshotBody
@@ -1007,8 +1040,16 @@ type ClientInterface interface {
 
 	TitanInfrastructureEndpointsVmUpdateVmEndpoint(ctx context.Context, vmId string, body TitanInfrastructureEndpointsVmUpdateVmEndpointJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// TitanInfrastructureEndpointsVmCreateVmConsoleTicketEndpointWithBody request with any body
+	TitanInfrastructureEndpointsVmCreateVmConsoleTicketEndpointWithBody(ctx context.Context, vmId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	TitanInfrastructureEndpointsVmCreateVmConsoleTicketEndpoint(ctx context.Context, vmId string, body TitanInfrastructureEndpointsVmCreateVmConsoleTicketEndpointJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// TitanInfrastructureEndpointsBillingGetVmCostEndpoint request
 	TitanInfrastructureEndpointsBillingGetVmCostEndpoint(ctx context.Context, vmId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// TitanInfrastructureEndpointsVmGetVmMetricsEndpoint request
+	TitanInfrastructureEndpointsVmGetVmMetricsEndpoint(ctx context.Context, vmId string, params *TitanInfrastructureEndpointsVmGetVmMetricsEndpointParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// TitanInfrastructureEndpointsVmSnapshotsListSnapshotsEndpoint request
 	TitanInfrastructureEndpointsVmSnapshotsListSnapshotsEndpoint(ctx context.Context, vmId string, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -1690,8 +1731,44 @@ func (c *Client) TitanInfrastructureEndpointsVmUpdateVmEndpoint(ctx context.Cont
 	return c.Client.Do(req)
 }
 
+func (c *Client) TitanInfrastructureEndpointsVmCreateVmConsoleTicketEndpointWithBody(ctx context.Context, vmId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewTitanInfrastructureEndpointsVmCreateVmConsoleTicketEndpointRequestWithBody(c.Server, vmId, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) TitanInfrastructureEndpointsVmCreateVmConsoleTicketEndpoint(ctx context.Context, vmId string, body TitanInfrastructureEndpointsVmCreateVmConsoleTicketEndpointJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewTitanInfrastructureEndpointsVmCreateVmConsoleTicketEndpointRequest(c.Server, vmId, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 func (c *Client) TitanInfrastructureEndpointsBillingGetVmCostEndpoint(ctx context.Context, vmId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewTitanInfrastructureEndpointsBillingGetVmCostEndpointRequest(c.Server, vmId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) TitanInfrastructureEndpointsVmGetVmMetricsEndpoint(ctx context.Context, vmId string, params *TitanInfrastructureEndpointsVmGetVmMetricsEndpointParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewTitanInfrastructureEndpointsVmGetVmMetricsEndpointRequest(c.Server, vmId, params)
 	if err != nil {
 		return nil, err
 	}
@@ -3452,6 +3529,53 @@ func NewTitanInfrastructureEndpointsVmUpdateVmEndpointRequestWithBody(server str
 	return req, nil
 }
 
+// NewTitanInfrastructureEndpointsVmCreateVmConsoleTicketEndpointRequest calls the generic TitanInfrastructureEndpointsVmCreateVmConsoleTicketEndpoint builder with application/json body
+func NewTitanInfrastructureEndpointsVmCreateVmConsoleTicketEndpointRequest(server string, vmId string, body TitanInfrastructureEndpointsVmCreateVmConsoleTicketEndpointJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewTitanInfrastructureEndpointsVmCreateVmConsoleTicketEndpointRequestWithBody(server, vmId, "application/json", bodyReader)
+}
+
+// NewTitanInfrastructureEndpointsVmCreateVmConsoleTicketEndpointRequestWithBody generates requests for TitanInfrastructureEndpointsVmCreateVmConsoleTicketEndpoint with any type of body
+func NewTitanInfrastructureEndpointsVmCreateVmConsoleTicketEndpointRequestWithBody(server string, vmId string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "vmId", runtime.ParamLocationPath, vmId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/tenant/vms/%s/console-tickets", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
 // NewTitanInfrastructureEndpointsBillingGetVmCostEndpointRequest generates requests for TitanInfrastructureEndpointsBillingGetVmCostEndpoint
 func NewTitanInfrastructureEndpointsBillingGetVmCostEndpointRequest(server string, vmId string) (*http.Request, error) {
 	var err error
@@ -3476,6 +3600,62 @@ func NewTitanInfrastructureEndpointsBillingGetVmCostEndpointRequest(server strin
 	queryURL, err := serverURL.Parse(operationPath)
 	if err != nil {
 		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewTitanInfrastructureEndpointsVmGetVmMetricsEndpointRequest generates requests for TitanInfrastructureEndpointsVmGetVmMetricsEndpoint
+func NewTitanInfrastructureEndpointsVmGetVmMetricsEndpointRequest(server string, vmId string, params *TitanInfrastructureEndpointsVmGetVmMetricsEndpointParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "vmId", runtime.ParamLocationPath, vmId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/tenant/vms/%s/metrics", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if params.Range != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "range", runtime.ParamLocationQuery, *params.Range); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
 	}
 
 	req, err := http.NewRequest("GET", queryURL.String(), nil)
@@ -4420,8 +4600,16 @@ type ClientWithResponsesInterface interface {
 
 	TitanInfrastructureEndpointsVmUpdateVmEndpointWithResponse(ctx context.Context, vmId string, body TitanInfrastructureEndpointsVmUpdateVmEndpointJSONRequestBody, reqEditors ...RequestEditorFn) (*TitanInfrastructureEndpointsVmUpdateVmEndpointResponse, error)
 
+	// TitanInfrastructureEndpointsVmCreateVmConsoleTicketEndpointWithBodyWithResponse request with any body
+	TitanInfrastructureEndpointsVmCreateVmConsoleTicketEndpointWithBodyWithResponse(ctx context.Context, vmId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*TitanInfrastructureEndpointsVmCreateVmConsoleTicketEndpointResponse, error)
+
+	TitanInfrastructureEndpointsVmCreateVmConsoleTicketEndpointWithResponse(ctx context.Context, vmId string, body TitanInfrastructureEndpointsVmCreateVmConsoleTicketEndpointJSONRequestBody, reqEditors ...RequestEditorFn) (*TitanInfrastructureEndpointsVmCreateVmConsoleTicketEndpointResponse, error)
+
 	// TitanInfrastructureEndpointsBillingGetVmCostEndpointWithResponse request
 	TitanInfrastructureEndpointsBillingGetVmCostEndpointWithResponse(ctx context.Context, vmId string, reqEditors ...RequestEditorFn) (*TitanInfrastructureEndpointsBillingGetVmCostEndpointResponse, error)
+
+	// TitanInfrastructureEndpointsVmGetVmMetricsEndpointWithResponse request
+	TitanInfrastructureEndpointsVmGetVmMetricsEndpointWithResponse(ctx context.Context, vmId string, params *TitanInfrastructureEndpointsVmGetVmMetricsEndpointParams, reqEditors ...RequestEditorFn) (*TitanInfrastructureEndpointsVmGetVmMetricsEndpointResponse, error)
 
 	// TitanInfrastructureEndpointsVmSnapshotsListSnapshotsEndpointWithResponse request
 	TitanInfrastructureEndpointsVmSnapshotsListSnapshotsEndpointWithResponse(ctx context.Context, vmId string, reqEditors ...RequestEditorFn) (*TitanInfrastructureEndpointsVmSnapshotsListSnapshotsEndpointResponse, error)
@@ -5359,6 +5547,27 @@ func (r TitanInfrastructureEndpointsVmUpdateVmEndpointResponse) StatusCode() int
 	return 0
 }
 
+type TitanInfrastructureEndpointsVmCreateVmConsoleTicketEndpointResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r TitanInfrastructureEndpointsVmCreateVmConsoleTicketEndpointResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r TitanInfrastructureEndpointsVmCreateVmConsoleTicketEndpointResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type TitanInfrastructureEndpointsBillingGetVmCostEndpointResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -5375,6 +5584,28 @@ func (r TitanInfrastructureEndpointsBillingGetVmCostEndpointResponse) Status() s
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r TitanInfrastructureEndpointsBillingGetVmCostEndpointResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type TitanInfrastructureEndpointsVmGetVmMetricsEndpointResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *VmMetricsQueryResult
+}
+
+// Status returns HTTPResponse.Status
+func (r TitanInfrastructureEndpointsVmGetVmMetricsEndpointResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r TitanInfrastructureEndpointsVmGetVmMetricsEndpointResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -6239,6 +6470,23 @@ func (c *ClientWithResponses) TitanInfrastructureEndpointsVmUpdateVmEndpointWith
 	return ParseTitanInfrastructureEndpointsVmUpdateVmEndpointResponse(rsp)
 }
 
+// TitanInfrastructureEndpointsVmCreateVmConsoleTicketEndpointWithBodyWithResponse request with arbitrary body returning *TitanInfrastructureEndpointsVmCreateVmConsoleTicketEndpointResponse
+func (c *ClientWithResponses) TitanInfrastructureEndpointsVmCreateVmConsoleTicketEndpointWithBodyWithResponse(ctx context.Context, vmId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*TitanInfrastructureEndpointsVmCreateVmConsoleTicketEndpointResponse, error) {
+	rsp, err := c.TitanInfrastructureEndpointsVmCreateVmConsoleTicketEndpointWithBody(ctx, vmId, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseTitanInfrastructureEndpointsVmCreateVmConsoleTicketEndpointResponse(rsp)
+}
+
+func (c *ClientWithResponses) TitanInfrastructureEndpointsVmCreateVmConsoleTicketEndpointWithResponse(ctx context.Context, vmId string, body TitanInfrastructureEndpointsVmCreateVmConsoleTicketEndpointJSONRequestBody, reqEditors ...RequestEditorFn) (*TitanInfrastructureEndpointsVmCreateVmConsoleTicketEndpointResponse, error) {
+	rsp, err := c.TitanInfrastructureEndpointsVmCreateVmConsoleTicketEndpoint(ctx, vmId, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseTitanInfrastructureEndpointsVmCreateVmConsoleTicketEndpointResponse(rsp)
+}
+
 // TitanInfrastructureEndpointsBillingGetVmCostEndpointWithResponse request returning *TitanInfrastructureEndpointsBillingGetVmCostEndpointResponse
 func (c *ClientWithResponses) TitanInfrastructureEndpointsBillingGetVmCostEndpointWithResponse(ctx context.Context, vmId string, reqEditors ...RequestEditorFn) (*TitanInfrastructureEndpointsBillingGetVmCostEndpointResponse, error) {
 	rsp, err := c.TitanInfrastructureEndpointsBillingGetVmCostEndpoint(ctx, vmId, reqEditors...)
@@ -6246,6 +6494,15 @@ func (c *ClientWithResponses) TitanInfrastructureEndpointsBillingGetVmCostEndpoi
 		return nil, err
 	}
 	return ParseTitanInfrastructureEndpointsBillingGetVmCostEndpointResponse(rsp)
+}
+
+// TitanInfrastructureEndpointsVmGetVmMetricsEndpointWithResponse request returning *TitanInfrastructureEndpointsVmGetVmMetricsEndpointResponse
+func (c *ClientWithResponses) TitanInfrastructureEndpointsVmGetVmMetricsEndpointWithResponse(ctx context.Context, vmId string, params *TitanInfrastructureEndpointsVmGetVmMetricsEndpointParams, reqEditors ...RequestEditorFn) (*TitanInfrastructureEndpointsVmGetVmMetricsEndpointResponse, error) {
+	rsp, err := c.TitanInfrastructureEndpointsVmGetVmMetricsEndpoint(ctx, vmId, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseTitanInfrastructureEndpointsVmGetVmMetricsEndpointResponse(rsp)
 }
 
 // TitanInfrastructureEndpointsVmSnapshotsListSnapshotsEndpointWithResponse request returning *TitanInfrastructureEndpointsVmSnapshotsListSnapshotsEndpointResponse
@@ -7379,6 +7636,22 @@ func ParseTitanInfrastructureEndpointsVmUpdateVmEndpointResponse(rsp *http.Respo
 	return response, nil
 }
 
+// ParseTitanInfrastructureEndpointsVmCreateVmConsoleTicketEndpointResponse parses an HTTP response from a TitanInfrastructureEndpointsVmCreateVmConsoleTicketEndpointWithResponse call
+func ParseTitanInfrastructureEndpointsVmCreateVmConsoleTicketEndpointResponse(rsp *http.Response) (*TitanInfrastructureEndpointsVmCreateVmConsoleTicketEndpointResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &TitanInfrastructureEndpointsVmCreateVmConsoleTicketEndpointResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
 // ParseTitanInfrastructureEndpointsBillingGetVmCostEndpointResponse parses an HTTP response from a TitanInfrastructureEndpointsBillingGetVmCostEndpointWithResponse call
 func ParseTitanInfrastructureEndpointsBillingGetVmCostEndpointResponse(rsp *http.Response) (*TitanInfrastructureEndpointsBillingGetVmCostEndpointResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -7395,6 +7668,32 @@ func ParseTitanInfrastructureEndpointsBillingGetVmCostEndpointResponse(rsp *http
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest VmCostQueryResult
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseTitanInfrastructureEndpointsVmGetVmMetricsEndpointResponse parses an HTTP response from a TitanInfrastructureEndpointsVmGetVmMetricsEndpointWithResponse call
+func ParseTitanInfrastructureEndpointsVmGetVmMetricsEndpointResponse(rsp *http.Response) (*TitanInfrastructureEndpointsVmGetVmMetricsEndpointResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &TitanInfrastructureEndpointsVmGetVmMetricsEndpointResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest VmMetricsQueryResult
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
