@@ -4,7 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -126,6 +128,7 @@ func newCreate(deps *command.Deps) *cobra.Command {
 	var cluster, network, template, size string
 	var sshKeys []string
 	var diskSizeGb int32
+	var consolePasswordStdin bool
 	var flags waitFlags
 	create := &cobra.Command{
 		Use:   "create <name> --cluster <cluster> --network <network> --template <template> --size <size>",
@@ -135,11 +138,18 @@ func newCreate(deps *command.Deps) *cobra.Command {
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
+			body := api.CreateVmCommand{Name: args[0], ClusterId: &cluster}
+			if consolePasswordStdin {
+				password, err := readConsolePassword(deps.Stdin)
+				if err != nil {
+					return err
+				}
+				body.ConsolePassword = &password
+			}
 			client, err := deps.Client(ctx)
 			if err != nil {
 				return err
 			}
-			body := api.CreateVmCommand{Name: args[0], ClusterId: &cluster}
 			body.NetworkId, err = resolveNetwork(ctx, client, network)
 			if err != nil {
 				return err
@@ -189,11 +199,28 @@ func newCreate(deps *command.Deps) *cobra.Command {
 	create.Flags().StringVar(&size, "size", "", "size name or id (see `openvicloud size list`)")
 	create.Flags().StringArrayVar(&sshKeys, "ssh-key", nil, "SSH key name or id to install; repeat for several keys")
 	create.Flags().Int32Var(&diskSizeGb, "disk-size", 0, "disk size in GB (default: the template's)")
+	create.Flags().BoolVar(&consolePasswordStdin, "console-password-stdin", false,
+		"read a console password (12 to 72 characters) from stdin, to log in as ubuntu on the VM's console")
 	for _, name := range []string{"cluster", "network", "template", "size"} {
 		create.MarkFlagRequired(name)
 	}
 	flags.add(create)
 	return create
+}
+
+// readConsolePassword takes all of stdin less one line end: the password never goes on the command line, where other
+// users of the machine and the shell history see it (titan-ops features/vm/design.md#console-password).
+func readConsolePassword(stdin io.Reader) (string, error) {
+	contents, err := io.ReadAll(stdin)
+	if err != nil {
+		return "", fmt.Errorf("reading the console password from stdin: %w", err)
+	}
+	password := strings.TrimSuffix(string(contents), "\n")
+	password = strings.TrimSuffix(password, "\r")
+	if password == "" {
+		return "", errors.New("no console password on stdin: pipe it in, e.g. `openvicloud vm create ... --console-password-stdin < password.txt`")
+	}
+	return password, nil
 }
 
 // createVm sends the create, again with the same key while its answer is lost.
