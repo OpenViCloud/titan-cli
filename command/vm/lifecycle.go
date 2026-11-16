@@ -134,7 +134,8 @@ func newCreate(deps *command.Deps) *cobra.Command {
 		Use:   "create <name> --cluster <cluster> --network <network> --template <template> --size <size>",
 		Short: "Create a VM",
 		Long: "Create a VM. Network, template, size and SSH keys are given by name or id: see `openvicloud template list`,\n" +
-			"`openvicloud size list`, `openvicloud ssh-key list`. Without an SSH key you cannot log in to the VM.",
+			"`openvicloud size list`, `openvicloud ssh-key list`. Without an SSH key you cannot log in over SSH; with\n" +
+			"--console-password-stdin you can log in as ubuntu on the VM's console, in the Console tab of the portal.",
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()

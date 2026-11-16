@@ -194,7 +194,8 @@ func TestVmCreate_UnknownSshKey_SaysSo_AndCreatesNothing(t *testing.T) {
 	}
 }
 
-// US-SSH-4 AC-4: the console password comes from stdin, never from the command line, and is never printed.
+// titan-ops features/vm/user-stories.md#us-ssh-4: the console password comes from stdin, never from the command line,
+// and is never printed.
 
 func TestVmCreate_ConsolePasswordStdin_SendsWhatStdinHolds_WithoutItsLineEnd(t *testing.T) {
 	for _, tc := range []struct{ stdin, want string }{
