@@ -6,8 +6,10 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/spf13/cobra"
 
@@ -18,6 +20,9 @@ import (
 	"github.com/OpenViCloud/titan-cli/output"
 	"github.com/OpenViCloud/titan-cli/wait"
 )
+
+// maxUserDataBytes is the API's limit on userData, in UTF-8 bytes (titan-ops features/vm/design.md#vm-create-flow).
+const maxUserDataBytes = 32768
 
 const (
 	pollInterval   = 5 * time.Second
@@ -125,7 +130,7 @@ func newGet(deps *command.Deps) *cobra.Command {
 }
 
 func newCreate(deps *command.Deps) *cobra.Command {
-	var cluster, network, template, size string
+	var cluster, network, template, size, userDataFile string
 	var sshKeys []string
 	var diskSizeGb int32
 	var consolePasswordStdin bool
@@ -135,7 +140,9 @@ func newCreate(deps *command.Deps) *cobra.Command {
 		Short: "Create a VM",
 		Long: "Create a VM. Network, template, size and SSH keys are given by name or id: see `openvicloud template list`,\n" +
 			"`openvicloud size list`, `openvicloud ssh-key list`. Without an SSH key you cannot log in over SSH; with\n" +
-			"--console-password-stdin you can log in as ubuntu on the VM's console, in the Console tab of the portal.",
+			"--console-password-stdin you can log in as ubuntu on the VM's console, in the Console tab of the portal.\n" +
+			"--user-data takes cloud-init user data from a file, never from the command line: it is typically several\n" +
+			"lines and too long for a shell argument.",
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
@@ -146,6 +153,13 @@ func newCreate(deps *command.Deps) *cobra.Command {
 					return err
 				}
 				body.ConsolePassword = &password
+			}
+			if userDataFile != "" {
+				userData, err := readUserData(userDataFile)
+				if err != nil {
+					return err
+				}
+				body.UserData = &userData
 			}
 			client, err := deps.Client(ctx)
 			if err != nil {
@@ -202,6 +216,8 @@ func newCreate(deps *command.Deps) *cobra.Command {
 	create.Flags().Int32Var(&diskSizeGb, "disk-size", 0, "disk size in GB (default: the template's)")
 	create.Flags().BoolVar(&consolePasswordStdin, "console-password-stdin", false,
 		"read a console password (12 to 72 characters) from stdin, to log in as ubuntu on the VM's console")
+	create.Flags().StringVar(&userDataFile, "user-data", "",
+		"file holding cloud-init user data, sent exactly as written; at most 32768 bytes of UTF-8")
 	for _, name := range []string{"cluster", "network", "template", "size"} {
 		create.MarkFlagRequired(name)
 	}
@@ -222,6 +238,25 @@ func readConsolePassword(stdin io.Reader) (string, error) {
 		return "", errors.New("no console password on stdin: pipe it in, e.g. `openvicloud vm create ... --console-password-stdin < password.txt`")
 	}
 	return password, nil
+}
+
+// readUserData takes the exact bytes of file as cloud-init user data. The API stores and returns userData
+// verbatim and limits it to maxUserDataBytes of UTF-8 (titan-ops features/vm/design.md#vm-create-flow); checking
+// the limit here, before any request, avoids a validation round trip for a file that was always too big.
+func readUserData(file string) (string, error) {
+	content, err := os.ReadFile(file)
+	if err != nil {
+		return "", fmt.Errorf("cannot read the user data file %s: %w", file, err)
+	}
+	if len(content) > maxUserDataBytes {
+		return "", fmt.Errorf("the user data file %s is %d bytes, more than the %d byte limit", file, len(content), maxUserDataBytes)
+	}
+	// encoding/json replaces invalid UTF-8 with U+FFFD when it marshals a string, which would silently send
+	// something other than the file's exact content.
+	if !utf8.Valid(content) {
+		return "", fmt.Errorf("the user data file %s is not valid UTF-8", file)
+	}
+	return string(content), nil
 }
 
 // createVm sends the create, again with the same key while its answer is lost.
