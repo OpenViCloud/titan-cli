@@ -139,8 +139,9 @@ func newCreate(deps *command.Deps) *cobra.Command {
 		Use:   "create <name> --cluster <cluster> --network <network> --template <template> --size <size>",
 		Short: "Create a VM",
 		Long: "Create a VM. Network, template, size and SSH keys are given by name or id: see `openvicloud template list`,\n" +
-			"`openvicloud size list`, `openvicloud ssh-key list`. Without an SSH key you cannot log in over SSH; with\n" +
-			"--console-password-stdin you can log in as ubuntu on the VM's console, in the Console tab of the portal.\n" +
+			"`openvicloud size list`, `openvicloud ssh-key list`. Without an SSH key you cannot log in over SSH (add one later\n" +
+			"with `vm add-ssh-key`); with --console-password-stdin you can log in as ubuntu on the VM's console, in the\n" +
+			"Console tab of the portal.\n" +
 			"--user-data takes cloud-init user data from a file, never from the command line: it is typically several\n" +
 			"lines and too long for a shell argument.",
 		Args: cobra.ExactArgs(1),
@@ -299,7 +300,10 @@ func newRename(deps *command.Deps) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			response, err := client.TitanInfrastructureEndpointsVmUpdateVmEndpointWithResponse(cmd.Context(), id, api.RenameVmBody{Name: args[1]})
+			// UpdateVmBody also carries stopTimeoutSeconds (titan-ops features/vm/design.md#vm-stop-timeout); the CLI
+			// has no flag for it yet, so this PATCH only ever sets the name.
+			newName := args[1]
+			response, err := client.TitanInfrastructureEndpointsVmUpdateVmEndpointWithResponse(cmd.Context(), id, api.UpdateVmBody{Name: &newName})
 			if err != nil {
 				return err
 			}

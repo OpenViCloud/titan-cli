@@ -34,8 +34,8 @@ func New(deps *command.Deps) *cobra.Command {
 		Use:   "vm",
 		Short: "Your virtual machines",
 	}
-	vm.AddCommand(newList(deps), newGet(deps), newCreate(deps), newRename(deps), newStart(deps), newStop(deps),
-		newDelete(deps), newSsh(deps), newTunnel(deps))
+	vm.AddCommand(newList(deps), newGet(deps), newCreate(deps), newAddSshKey(deps), newRename(deps), newStart(deps),
+		newStop(deps), newDelete(deps), newSsh(deps), newTunnel(deps))
 	return vm
 }
 
@@ -45,8 +45,8 @@ func newSsh(deps *command.Deps) *cobra.Command {
 		Use:   "ssh <vm name or id> [-- <ssh options>]",
 		Short: "Open an SSH session to a running VM",
 		Long: "Open an SSH session to a running VM with your system ssh, through OpenViCloud: the VM needs no public address.\n\n" +
-			"Your VM must have one of your SSH keys (pick it when you create the VM). Anything after -- goes to ssh after the\n" +
-			"destination: options, then a command to run, for example:\n" +
+			"Your VM must have one of your SSH keys (pick it when you create the VM, or add one later with `vm add-ssh-key`).\n" +
+			"Anything after -- goes to ssh after the destination: options, then a command to run, for example:\n" +
 			"  openvicloud vm ssh web-1 -- -i ~/.ssh/id_ed25519\n" +
 			"  openvicloud vm ssh web-1 -- uptime",
 		Args: cobra.MinimumNArgs(1),

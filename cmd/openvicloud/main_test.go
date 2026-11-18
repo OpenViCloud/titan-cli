@@ -97,6 +97,8 @@ type fakeApi struct {
 	// GET /v1/tenant/vms/{id}: the answers in order, the last one repeated; vmGone answers 404. Unset: the matching
 	// row of vms.
 	vmReads map[string][]string
+	// GET /v1/tenant/vms/{vmId}/key-additions/{id}: the answers in order, the last one repeated. Unset: 404.
+	keyAdditionReads map[string][]string
 	// Status codes of successive POST /v1/tenant/vms; when used up, 202 {vmId}.
 	createAnswers []int
 	// A problem answered by every write instead of its success: status and body.
@@ -115,6 +117,8 @@ type recordedWrite struct {
 }
 
 const createdVmId = "5b0e7f4c-0000-4000-8000-0000000000aa"
+
+const createdKeyAdditionId = "5b0e7f4c-0000-4000-8000-0000000000cc"
 
 const sshBanner = "SSH-2.0-fake\r\n"
 
@@ -184,6 +188,20 @@ func newFakeApi(t *testing.T) *fakeApi {
 		}
 		writeJSON(w, http.StatusNotFound, map[string]any{"status": 404, "title": "VM not found.", "code": "VM_NOT_FOUND"})
 	})
+	mux.HandleFunc("GET /v1/tenant/vms/{vmId}/key-additions/{keyAdditionId}", func(w http.ResponseWriter, r *http.Request) {
+		id := r.PathValue("keyAdditionId")
+		answers := fake.keyAdditionReads[id]
+		if len(answers) == 0 {
+			writeJSON(w, http.StatusNotFound, map[string]any{"status": 404, "title": "Key addition not found.", "code": "VM_KEY_ADDITION_NOT_FOUND"})
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(answers[0]))
+		if len(answers) > 1 {
+			fake.keyAdditionReads[id] = answers[1:]
+		}
+	})
 	write := func(success int, body any) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
 			recorded := recordedWrite{Method: r.Method, Path: r.URL.Path, IdempotencyKey: r.Header.Get("Idempotency-Key")}
@@ -217,6 +235,7 @@ func newFakeApi(t *testing.T) *fakeApi {
 	mux.HandleFunc("DELETE /v1/tenant/vms/{vmId}", write(http.StatusAccepted, nil))
 	mux.HandleFunc("POST /v1/tenant/vms/{vmId}/start", write(http.StatusAccepted, nil))
 	mux.HandleFunc("POST /v1/tenant/vms/{vmId}/stop", write(http.StatusAccepted, nil))
+	mux.HandleFunc("POST /v1/tenant/vms/{vmId}/key-additions", write(http.StatusAccepted, map[string]any{"keyAdditionId": createdKeyAdditionId}))
 	mux.HandleFunc("POST /v1/tenant/ssh-keys", write(http.StatusCreated, map[string]any{"id": "c3c30000-0000-4000-8000-0000000000bb"}))
 	mux.HandleFunc("DELETE /v1/tenant/ssh-keys/{sshKeyId}", write(http.StatusNoContent, nil))
 	// Like the control plane: a refusal is a JSON problem before the upgrade; a session ends with a normal close.
