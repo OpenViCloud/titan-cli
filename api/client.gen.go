@@ -87,6 +87,13 @@ const (
 	TopUpStatusPending   TopUpStatus = "Pending"
 )
 
+// Defines values for VmKeyAdditionStatus.
+const (
+	VmKeyAdditionStatusAdded  VmKeyAdditionStatus = "Added"
+	VmKeyAdditionStatusAdding VmKeyAdditionStatus = "Adding"
+	VmKeyAdditionStatusFailed VmKeyAdditionStatus = "Failed"
+)
+
 // Defines values for VmSnapshotStatus.
 const (
 	VmSnapshotStatusAvailable VmSnapshotStatus = "Available"
@@ -211,6 +218,11 @@ type CreateFirewallRuleRequest struct {
 	StartPort *int32 `json:"startPort"`
 }
 
+// CreateKeyAdditionBody defines model for CreateKeyAdditionBody.
+type CreateKeyAdditionBody struct {
+	SshKeyIds *[]string `json:"sshKeyIds,omitempty"`
+}
+
 // CreateLoadBalancerCommand defines model for CreateLoadBalancerCommand.
 type CreateLoadBalancerCommand struct {
 	Backends  *[]LoadBalancerBackendInput  `json:"backends,omitempty"`
@@ -246,15 +258,16 @@ type CreateSnapshotBody struct {
 
 // CreateVmCommand defines model for CreateVmCommand.
 type CreateVmCommand struct {
-	ClusterId       *string   `json:"clusterId"`
-	ConsolePassword *string   `json:"consolePassword"`
-	DiskSizeGb      *int32    `json:"diskSizeGb"`
-	Name            string    `json:"name"`
-	NetworkId       string    `json:"networkId"`
-	SshKeyIds       *[]string `json:"sshKeyIds"`
-	TemplateId      string    `json:"templateId"`
-	UserData        *string   `json:"userData"`
-	VmOfferingId    string    `json:"vmOfferingId"`
+	ClusterId          *string   `json:"clusterId"`
+	ConsolePassword    *string   `json:"consolePassword"`
+	DiskSizeGb         *int32    `json:"diskSizeGb"`
+	Name               string    `json:"name"`
+	NetworkId          string    `json:"networkId"`
+	SshKeyIds          *[]string `json:"sshKeyIds"`
+	StopTimeoutSeconds *int32    `json:"stopTimeoutSeconds"`
+	TemplateId         string    `json:"templateId"`
+	UserData           *string   `json:"userData"`
+	VmOfferingId       string    `json:"vmOfferingId"`
 }
 
 // CreateVmCommandResult defines model for CreateVmCommandResult.
@@ -265,6 +278,11 @@ type CreateVmCommandResult struct {
 // CreateVmConsoleTicketRequest defines model for CreateVmConsoleTicketRequest.
 type CreateVmConsoleTicketRequest struct {
 	Ticket string `json:"ticket"`
+}
+
+// CreateVmKeyAdditionCommandResult defines model for CreateVmKeyAdditionCommandResult.
+type CreateVmKeyAdditionCommandResult struct {
+	KeyAdditionId *string `json:"keyAdditionId,omitempty"`
 }
 
 // CreateVmSnapshotCommandResult defines model for CreateVmSnapshotCommandResult.
@@ -450,11 +468,6 @@ type RenameNetworkRequest struct {
 	Name string `json:"name"`
 }
 
-// RenameVmBody defines model for RenameVmBody.
-type RenameVmBody struct {
-	Name string `json:"name"`
-}
-
 // RequestTopUpCommand defines model for RequestTopUpCommand.
 type RequestTopUpCommand struct {
 	Amount *json.Number `json:"amount,omitempty"`
@@ -550,6 +563,12 @@ type UpdateLoadBalancerBody struct {
 	Listeners *[]LoadBalancerListenerInput `json:"listeners,omitempty"`
 }
 
+// UpdateVmBody defines model for UpdateVmBody.
+type UpdateVmBody struct {
+	Name               *string `json:"name"`
+	StopTimeoutSeconds *int32  `json:"stopTimeoutSeconds"`
+}
+
 // UsageBreakdownLine defines model for UsageBreakdownLine.
 type UsageBreakdownLine struct {
 	Bucket    *time.Time   `json:"bucket,omitempty"`
@@ -572,6 +591,20 @@ type VmCostSummaryLine struct {
 	VmId      *string      `json:"vmId,omitempty"`
 	VmName    *string      `json:"vmName,omitempty"`
 }
+
+// VmKeyAdditionQueryResult defines model for VmKeyAdditionQueryResult.
+type VmKeyAdditionQueryResult struct {
+	CreatedAt            *time.Time           `json:"createdAt,omitempty"`
+	Id                   *string              `json:"id,omitempty"`
+	RequestFailedAt      *time.Time           `json:"requestFailedAt"`
+	RequestFailureReason *string              `json:"requestFailureReason"`
+	RestartNeeded        *bool                `json:"restartNeeded,omitempty"`
+	SshKeyIds            *[]string            `json:"sshKeyIds,omitempty"`
+	Status               *VmKeyAdditionStatus `json:"status,omitempty"`
+}
+
+// VmKeyAdditionStatus defines model for VmKeyAdditionStatus.
+type VmKeyAdditionStatus string
 
 // VmMetricPointQueryResult defines model for VmMetricPointQueryResult.
 type VmMetricPointQueryResult struct {
@@ -614,6 +647,7 @@ type VmQueryResult struct {
 	RequestFailedAt      *time.Time `json:"requestFailedAt"`
 	RequestFailureReason *string    `json:"requestFailureReason"`
 	Status               *VmStatus  `json:"status,omitempty"`
+	StopTimeoutSeconds   *int32     `json:"stopTimeoutSeconds,omitempty"`
 	TemplateId           *string    `json:"templateId,omitempty"`
 	UserData             *string    `json:"userData"`
 	VmOfferingId         *string    `json:"vmOfferingId,omitempty"`
@@ -745,6 +779,12 @@ type TitanInfrastructureEndpointsVmCreateVmEndpointParams struct {
 	IdempotencyKey string `json:"Idempotency-Key"`
 }
 
+// TitanInfrastructureEndpointsVmKeyAdditionsCreateKeyAdditionEndpointParams defines parameters for TitanInfrastructureEndpointsVmKeyAdditionsCreateKeyAdditionEndpoint.
+type TitanInfrastructureEndpointsVmKeyAdditionsCreateKeyAdditionEndpointParams struct {
+	// IdempotencyKey One value per logical submission; a retry with the same value replays the first response.
+	IdempotencyKey string `json:"Idempotency-Key"`
+}
+
 // TitanInfrastructureEndpointsVmGetVmMetricsEndpointParams defines parameters for TitanInfrastructureEndpointsVmGetVmMetricsEndpoint.
 type TitanInfrastructureEndpointsVmGetVmMetricsEndpointParams struct {
 	Range *string `form:"range,omitempty" json:"range,omitempty"`
@@ -805,10 +845,13 @@ type TitanInfrastructureEndpointsTopUpCreateTopUpEndpointJSONRequestBody = Reque
 type TitanInfrastructureEndpointsVmCreateVmEndpointJSONRequestBody = CreateVmCommand
 
 // TitanInfrastructureEndpointsVmUpdateVmEndpointJSONRequestBody defines body for TitanInfrastructureEndpointsVmUpdateVmEndpoint for application/json ContentType.
-type TitanInfrastructureEndpointsVmUpdateVmEndpointJSONRequestBody = RenameVmBody
+type TitanInfrastructureEndpointsVmUpdateVmEndpointJSONRequestBody = UpdateVmBody
 
 // TitanInfrastructureEndpointsVmCreateVmConsoleTicketEndpointJSONRequestBody defines body for TitanInfrastructureEndpointsVmCreateVmConsoleTicketEndpoint for application/json ContentType.
 type TitanInfrastructureEndpointsVmCreateVmConsoleTicketEndpointJSONRequestBody = CreateVmConsoleTicketRequest
+
+// TitanInfrastructureEndpointsVmKeyAdditionsCreateKeyAdditionEndpointJSONRequestBody defines body for TitanInfrastructureEndpointsVmKeyAdditionsCreateKeyAdditionEndpoint for application/json ContentType.
+type TitanInfrastructureEndpointsVmKeyAdditionsCreateKeyAdditionEndpointJSONRequestBody = CreateKeyAdditionBody
 
 // TitanInfrastructureEndpointsVmSnapshotsCreateSnapshotEndpointJSONRequestBody defines body for TitanInfrastructureEndpointsVmSnapshotsCreateSnapshotEndpoint for application/json ContentType.
 type TitanInfrastructureEndpointsVmSnapshotsCreateSnapshotEndpointJSONRequestBody = CreateSnapshotBody
@@ -1047,6 +1090,17 @@ type ClientInterface interface {
 
 	// TitanInfrastructureEndpointsBillingGetVmCostEndpoint request
 	TitanInfrastructureEndpointsBillingGetVmCostEndpoint(ctx context.Context, vmId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// TitanInfrastructureEndpointsVmKeyAdditionsListKeyAdditionsEndpoint request
+	TitanInfrastructureEndpointsVmKeyAdditionsListKeyAdditionsEndpoint(ctx context.Context, vmId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// TitanInfrastructureEndpointsVmKeyAdditionsCreateKeyAdditionEndpointWithBody request with any body
+	TitanInfrastructureEndpointsVmKeyAdditionsCreateKeyAdditionEndpointWithBody(ctx context.Context, vmId string, params *TitanInfrastructureEndpointsVmKeyAdditionsCreateKeyAdditionEndpointParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	TitanInfrastructureEndpointsVmKeyAdditionsCreateKeyAdditionEndpoint(ctx context.Context, vmId string, params *TitanInfrastructureEndpointsVmKeyAdditionsCreateKeyAdditionEndpointParams, body TitanInfrastructureEndpointsVmKeyAdditionsCreateKeyAdditionEndpointJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// TitanInfrastructureEndpointsVmKeyAdditionsGetKeyAdditionEndpoint request
+	TitanInfrastructureEndpointsVmKeyAdditionsGetKeyAdditionEndpoint(ctx context.Context, vmId string, keyAdditionId string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// TitanInfrastructureEndpointsVmGetVmMetricsEndpoint request
 	TitanInfrastructureEndpointsVmGetVmMetricsEndpoint(ctx context.Context, vmId string, params *TitanInfrastructureEndpointsVmGetVmMetricsEndpointParams, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -1757,6 +1811,54 @@ func (c *Client) TitanInfrastructureEndpointsVmCreateVmConsoleTicketEndpoint(ctx
 
 func (c *Client) TitanInfrastructureEndpointsBillingGetVmCostEndpoint(ctx context.Context, vmId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewTitanInfrastructureEndpointsBillingGetVmCostEndpointRequest(c.Server, vmId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) TitanInfrastructureEndpointsVmKeyAdditionsListKeyAdditionsEndpoint(ctx context.Context, vmId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewTitanInfrastructureEndpointsVmKeyAdditionsListKeyAdditionsEndpointRequest(c.Server, vmId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) TitanInfrastructureEndpointsVmKeyAdditionsCreateKeyAdditionEndpointWithBody(ctx context.Context, vmId string, params *TitanInfrastructureEndpointsVmKeyAdditionsCreateKeyAdditionEndpointParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewTitanInfrastructureEndpointsVmKeyAdditionsCreateKeyAdditionEndpointRequestWithBody(c.Server, vmId, params, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) TitanInfrastructureEndpointsVmKeyAdditionsCreateKeyAdditionEndpoint(ctx context.Context, vmId string, params *TitanInfrastructureEndpointsVmKeyAdditionsCreateKeyAdditionEndpointParams, body TitanInfrastructureEndpointsVmKeyAdditionsCreateKeyAdditionEndpointJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewTitanInfrastructureEndpointsVmKeyAdditionsCreateKeyAdditionEndpointRequest(c.Server, vmId, params, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) TitanInfrastructureEndpointsVmKeyAdditionsGetKeyAdditionEndpoint(ctx context.Context, vmId string, keyAdditionId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewTitanInfrastructureEndpointsVmKeyAdditionsGetKeyAdditionEndpointRequest(c.Server, vmId, keyAdditionId)
 	if err != nil {
 		return nil, err
 	}
@@ -3610,6 +3712,141 @@ func NewTitanInfrastructureEndpointsBillingGetVmCostEndpointRequest(server strin
 	return req, nil
 }
 
+// NewTitanInfrastructureEndpointsVmKeyAdditionsListKeyAdditionsEndpointRequest generates requests for TitanInfrastructureEndpointsVmKeyAdditionsListKeyAdditionsEndpoint
+func NewTitanInfrastructureEndpointsVmKeyAdditionsListKeyAdditionsEndpointRequest(server string, vmId string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "vmId", runtime.ParamLocationPath, vmId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/tenant/vms/%s/key-additions", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewTitanInfrastructureEndpointsVmKeyAdditionsCreateKeyAdditionEndpointRequest calls the generic TitanInfrastructureEndpointsVmKeyAdditionsCreateKeyAdditionEndpoint builder with application/json body
+func NewTitanInfrastructureEndpointsVmKeyAdditionsCreateKeyAdditionEndpointRequest(server string, vmId string, params *TitanInfrastructureEndpointsVmKeyAdditionsCreateKeyAdditionEndpointParams, body TitanInfrastructureEndpointsVmKeyAdditionsCreateKeyAdditionEndpointJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewTitanInfrastructureEndpointsVmKeyAdditionsCreateKeyAdditionEndpointRequestWithBody(server, vmId, params, "application/json", bodyReader)
+}
+
+// NewTitanInfrastructureEndpointsVmKeyAdditionsCreateKeyAdditionEndpointRequestWithBody generates requests for TitanInfrastructureEndpointsVmKeyAdditionsCreateKeyAdditionEndpoint with any type of body
+func NewTitanInfrastructureEndpointsVmKeyAdditionsCreateKeyAdditionEndpointRequestWithBody(server string, vmId string, params *TitanInfrastructureEndpointsVmKeyAdditionsCreateKeyAdditionEndpointParams, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "vmId", runtime.ParamLocationPath, vmId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/tenant/vms/%s/key-additions", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	if params != nil {
+
+		var headerParam0 string
+
+		headerParam0, err = runtime.StyleParamWithLocation("simple", false, "Idempotency-Key", runtime.ParamLocationHeader, params.IdempotencyKey)
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("Idempotency-Key", headerParam0)
+
+	}
+
+	return req, nil
+}
+
+// NewTitanInfrastructureEndpointsVmKeyAdditionsGetKeyAdditionEndpointRequest generates requests for TitanInfrastructureEndpointsVmKeyAdditionsGetKeyAdditionEndpoint
+func NewTitanInfrastructureEndpointsVmKeyAdditionsGetKeyAdditionEndpointRequest(server string, vmId string, keyAdditionId string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "vmId", runtime.ParamLocationPath, vmId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "keyAdditionId", runtime.ParamLocationPath, keyAdditionId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/tenant/vms/%s/key-additions/%s", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewTitanInfrastructureEndpointsVmGetVmMetricsEndpointRequest generates requests for TitanInfrastructureEndpointsVmGetVmMetricsEndpoint
 func NewTitanInfrastructureEndpointsVmGetVmMetricsEndpointRequest(server string, vmId string, params *TitanInfrastructureEndpointsVmGetVmMetricsEndpointParams) (*http.Request, error) {
 	var err error
@@ -4608,6 +4845,17 @@ type ClientWithResponsesInterface interface {
 	// TitanInfrastructureEndpointsBillingGetVmCostEndpointWithResponse request
 	TitanInfrastructureEndpointsBillingGetVmCostEndpointWithResponse(ctx context.Context, vmId string, reqEditors ...RequestEditorFn) (*TitanInfrastructureEndpointsBillingGetVmCostEndpointResponse, error)
 
+	// TitanInfrastructureEndpointsVmKeyAdditionsListKeyAdditionsEndpointWithResponse request
+	TitanInfrastructureEndpointsVmKeyAdditionsListKeyAdditionsEndpointWithResponse(ctx context.Context, vmId string, reqEditors ...RequestEditorFn) (*TitanInfrastructureEndpointsVmKeyAdditionsListKeyAdditionsEndpointResponse, error)
+
+	// TitanInfrastructureEndpointsVmKeyAdditionsCreateKeyAdditionEndpointWithBodyWithResponse request with any body
+	TitanInfrastructureEndpointsVmKeyAdditionsCreateKeyAdditionEndpointWithBodyWithResponse(ctx context.Context, vmId string, params *TitanInfrastructureEndpointsVmKeyAdditionsCreateKeyAdditionEndpointParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*TitanInfrastructureEndpointsVmKeyAdditionsCreateKeyAdditionEndpointResponse, error)
+
+	TitanInfrastructureEndpointsVmKeyAdditionsCreateKeyAdditionEndpointWithResponse(ctx context.Context, vmId string, params *TitanInfrastructureEndpointsVmKeyAdditionsCreateKeyAdditionEndpointParams, body TitanInfrastructureEndpointsVmKeyAdditionsCreateKeyAdditionEndpointJSONRequestBody, reqEditors ...RequestEditorFn) (*TitanInfrastructureEndpointsVmKeyAdditionsCreateKeyAdditionEndpointResponse, error)
+
+	// TitanInfrastructureEndpointsVmKeyAdditionsGetKeyAdditionEndpointWithResponse request
+	TitanInfrastructureEndpointsVmKeyAdditionsGetKeyAdditionEndpointWithResponse(ctx context.Context, vmId string, keyAdditionId string, reqEditors ...RequestEditorFn) (*TitanInfrastructureEndpointsVmKeyAdditionsGetKeyAdditionEndpointResponse, error)
+
 	// TitanInfrastructureEndpointsVmGetVmMetricsEndpointWithResponse request
 	TitanInfrastructureEndpointsVmGetVmMetricsEndpointWithResponse(ctx context.Context, vmId string, params *TitanInfrastructureEndpointsVmGetVmMetricsEndpointParams, reqEditors ...RequestEditorFn) (*TitanInfrastructureEndpointsVmGetVmMetricsEndpointResponse, error)
 
@@ -5590,6 +5838,72 @@ func (r TitanInfrastructureEndpointsBillingGetVmCostEndpointResponse) StatusCode
 	return 0
 }
 
+type TitanInfrastructureEndpointsVmKeyAdditionsListKeyAdditionsEndpointResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *[]VmKeyAdditionQueryResult
+}
+
+// Status returns HTTPResponse.Status
+func (r TitanInfrastructureEndpointsVmKeyAdditionsListKeyAdditionsEndpointResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r TitanInfrastructureEndpointsVmKeyAdditionsListKeyAdditionsEndpointResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type TitanInfrastructureEndpointsVmKeyAdditionsCreateKeyAdditionEndpointResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON202      *CreateVmKeyAdditionCommandResult
+}
+
+// Status returns HTTPResponse.Status
+func (r TitanInfrastructureEndpointsVmKeyAdditionsCreateKeyAdditionEndpointResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r TitanInfrastructureEndpointsVmKeyAdditionsCreateKeyAdditionEndpointResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type TitanInfrastructureEndpointsVmKeyAdditionsGetKeyAdditionEndpointResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *VmKeyAdditionQueryResult
+}
+
+// Status returns HTTPResponse.Status
+func (r TitanInfrastructureEndpointsVmKeyAdditionsGetKeyAdditionEndpointResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r TitanInfrastructureEndpointsVmKeyAdditionsGetKeyAdditionEndpointResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type TitanInfrastructureEndpointsVmGetVmMetricsEndpointResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -6494,6 +6808,41 @@ func (c *ClientWithResponses) TitanInfrastructureEndpointsBillingGetVmCostEndpoi
 		return nil, err
 	}
 	return ParseTitanInfrastructureEndpointsBillingGetVmCostEndpointResponse(rsp)
+}
+
+// TitanInfrastructureEndpointsVmKeyAdditionsListKeyAdditionsEndpointWithResponse request returning *TitanInfrastructureEndpointsVmKeyAdditionsListKeyAdditionsEndpointResponse
+func (c *ClientWithResponses) TitanInfrastructureEndpointsVmKeyAdditionsListKeyAdditionsEndpointWithResponse(ctx context.Context, vmId string, reqEditors ...RequestEditorFn) (*TitanInfrastructureEndpointsVmKeyAdditionsListKeyAdditionsEndpointResponse, error) {
+	rsp, err := c.TitanInfrastructureEndpointsVmKeyAdditionsListKeyAdditionsEndpoint(ctx, vmId, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseTitanInfrastructureEndpointsVmKeyAdditionsListKeyAdditionsEndpointResponse(rsp)
+}
+
+// TitanInfrastructureEndpointsVmKeyAdditionsCreateKeyAdditionEndpointWithBodyWithResponse request with arbitrary body returning *TitanInfrastructureEndpointsVmKeyAdditionsCreateKeyAdditionEndpointResponse
+func (c *ClientWithResponses) TitanInfrastructureEndpointsVmKeyAdditionsCreateKeyAdditionEndpointWithBodyWithResponse(ctx context.Context, vmId string, params *TitanInfrastructureEndpointsVmKeyAdditionsCreateKeyAdditionEndpointParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*TitanInfrastructureEndpointsVmKeyAdditionsCreateKeyAdditionEndpointResponse, error) {
+	rsp, err := c.TitanInfrastructureEndpointsVmKeyAdditionsCreateKeyAdditionEndpointWithBody(ctx, vmId, params, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseTitanInfrastructureEndpointsVmKeyAdditionsCreateKeyAdditionEndpointResponse(rsp)
+}
+
+func (c *ClientWithResponses) TitanInfrastructureEndpointsVmKeyAdditionsCreateKeyAdditionEndpointWithResponse(ctx context.Context, vmId string, params *TitanInfrastructureEndpointsVmKeyAdditionsCreateKeyAdditionEndpointParams, body TitanInfrastructureEndpointsVmKeyAdditionsCreateKeyAdditionEndpointJSONRequestBody, reqEditors ...RequestEditorFn) (*TitanInfrastructureEndpointsVmKeyAdditionsCreateKeyAdditionEndpointResponse, error) {
+	rsp, err := c.TitanInfrastructureEndpointsVmKeyAdditionsCreateKeyAdditionEndpoint(ctx, vmId, params, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseTitanInfrastructureEndpointsVmKeyAdditionsCreateKeyAdditionEndpointResponse(rsp)
+}
+
+// TitanInfrastructureEndpointsVmKeyAdditionsGetKeyAdditionEndpointWithResponse request returning *TitanInfrastructureEndpointsVmKeyAdditionsGetKeyAdditionEndpointResponse
+func (c *ClientWithResponses) TitanInfrastructureEndpointsVmKeyAdditionsGetKeyAdditionEndpointWithResponse(ctx context.Context, vmId string, keyAdditionId string, reqEditors ...RequestEditorFn) (*TitanInfrastructureEndpointsVmKeyAdditionsGetKeyAdditionEndpointResponse, error) {
+	rsp, err := c.TitanInfrastructureEndpointsVmKeyAdditionsGetKeyAdditionEndpoint(ctx, vmId, keyAdditionId, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseTitanInfrastructureEndpointsVmKeyAdditionsGetKeyAdditionEndpointResponse(rsp)
 }
 
 // TitanInfrastructureEndpointsVmGetVmMetricsEndpointWithResponse request returning *TitanInfrastructureEndpointsVmGetVmMetricsEndpointResponse
@@ -7668,6 +8017,84 @@ func ParseTitanInfrastructureEndpointsBillingGetVmCostEndpointResponse(rsp *http
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest VmCostQueryResult
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseTitanInfrastructureEndpointsVmKeyAdditionsListKeyAdditionsEndpointResponse parses an HTTP response from a TitanInfrastructureEndpointsVmKeyAdditionsListKeyAdditionsEndpointWithResponse call
+func ParseTitanInfrastructureEndpointsVmKeyAdditionsListKeyAdditionsEndpointResponse(rsp *http.Response) (*TitanInfrastructureEndpointsVmKeyAdditionsListKeyAdditionsEndpointResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &TitanInfrastructureEndpointsVmKeyAdditionsListKeyAdditionsEndpointResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest []VmKeyAdditionQueryResult
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseTitanInfrastructureEndpointsVmKeyAdditionsCreateKeyAdditionEndpointResponse parses an HTTP response from a TitanInfrastructureEndpointsVmKeyAdditionsCreateKeyAdditionEndpointWithResponse call
+func ParseTitanInfrastructureEndpointsVmKeyAdditionsCreateKeyAdditionEndpointResponse(rsp *http.Response) (*TitanInfrastructureEndpointsVmKeyAdditionsCreateKeyAdditionEndpointResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &TitanInfrastructureEndpointsVmKeyAdditionsCreateKeyAdditionEndpointResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 202:
+		var dest CreateVmKeyAdditionCommandResult
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON202 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseTitanInfrastructureEndpointsVmKeyAdditionsGetKeyAdditionEndpointResponse parses an HTTP response from a TitanInfrastructureEndpointsVmKeyAdditionsGetKeyAdditionEndpointWithResponse call
+func ParseTitanInfrastructureEndpointsVmKeyAdditionsGetKeyAdditionEndpointResponse(rsp *http.Response) (*TitanInfrastructureEndpointsVmKeyAdditionsGetKeyAdditionEndpointResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &TitanInfrastructureEndpointsVmKeyAdditionsGetKeyAdditionEndpointResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest VmKeyAdditionQueryResult
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}

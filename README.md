@@ -49,12 +49,14 @@ no browser login is needed then.
 |---|---|
 | Account | `auth login` · `auth logout` · `auth status` · `tenant get` · `version` |
 | Catalog | `cluster list` · `template list [--cluster]` · `size list` |
-| VMs | `vm list` · `vm get` · `vm create` · `vm rename` · `vm start` · `vm stop` · `vm delete` · `vm ssh` |
+| VMs | `vm list` · `vm get` · `vm create` · `vm rename` · `vm add-ssh-key` · `vm start` · `vm stop` · `vm delete` · `vm ssh` |
 | SSH keys | `ssh-key add` · `ssh-key list` · `ssh-key delete` |
 
-`create`, `start`, `stop` and `delete` take `--wait` to return only once the request is done. Every command takes
-`-o json`. Names or ids are accepted wherever a VM, network, template, size or SSH key is chosen. `vm create
---user-data <file>` sends that file's exact content as cloud-init user data (at most 32768 bytes of UTF-8).
+`create`, `start`, `stop` and `delete` take `--wait` to return only once the request is done. `vm add-ssh-key` is the
+other way round: it waits by default (same `--timeout`), and `--no-wait` returns right after sending the request.
+Every command takes `-o json`. Names or ids are accepted wherever a VM, network, template, size or SSH key is
+chosen. `vm create --user-data <file>` sends that file's exact content as cloud-init user data (at most 32768 bytes
+of UTF-8).
 
 The CLI targets the OpenViCloud API at `https://api.openvicloud.com`; `OPENVICLOUD_API_URL`, `OPENVICLOUD_AUTH_URL`
 and `OPENVICLOUD_PORTAL_URL` point it elsewhere.
