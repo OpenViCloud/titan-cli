@@ -263,6 +263,134 @@ func TestVmCreate_ConsolePasswordStdin_Empty_SaysSo_AndCreatesNothing(t *testing
 	}
 }
 
+// US-VM-USERDATA AC-4: --user-data reads cloud-init user data from a file, never from the command line.
+
+func TestVmCreate_UserData_SendsTheFilesExactContent(t *testing.T) {
+	h := newHarness(t)
+	h.login()
+	content := "#cloud-config\nruncmd:\n  - [touch, /tmp/hi]\n"
+	file := filepath.Join(t.TempDir(), "cloud.yaml")
+	os.WriteFile(file, []byte(content), 0o600)
+
+	err := h.run("vm", "create", "web-2", "--cluster", "local-mac", "--network", "app-net",
+		"--template", "tpl-ubuntu", "--size", "m", "--user-data", file)
+
+	if err != nil {
+		t.Fatalf("vm create: %v", err)
+	}
+	if got := lastWrite(t, h).Body["userData"]; got != content {
+		t.Fatalf("userData = %q, want %q", got, content)
+	}
+}
+
+func TestVmCreate_WithoutTheFlag_SendsNoUserData(t *testing.T) {
+	h := newHarness(t)
+	h.login()
+
+	err := h.run("vm", "create", "web-2", "--cluster", "local-mac", "--network", "app-net", "--template", "tpl-ubuntu", "--size", "m")
+
+	if err != nil {
+		t.Fatalf("vm create: %v", err)
+	}
+	// Like consolePassword, the generated client sends a field it has no value for as null, not an absent key.
+	if got := lastWrite(t, h).Body["userData"]; got != nil {
+		t.Fatalf("userData = %v, want null", got)
+	}
+}
+
+func TestVmCreate_UserDataFile_Missing_SaysSo_AndCreatesNothing(t *testing.T) {
+	h := newHarness(t)
+	h.login()
+	seen := len(h.api.authorizationsSeen)
+
+	err := h.run("vm", "create", "web-2", "--cluster", "local-mac", "--network", "app-net",
+		"--template", "tpl-ubuntu", "--size", "m", "--user-data", "/no/such/cloud.yaml")
+
+	if err == nil || !strings.Contains(err.Error(), "/no/such/cloud.yaml") {
+		t.Fatalf("err = %v", err)
+	}
+	if len(h.api.writes) != 0 {
+		t.Fatalf("writes = %+v", h.api.writes)
+	}
+	if len(h.api.authorizationsSeen) != seen {
+		t.Fatalf("the CLI called the API before reading the file: calls went from %d to %d", seen, len(h.api.authorizationsSeen))
+	}
+}
+
+func TestVmCreate_UserDataFile_ExactlyTheLimit_IsSent(t *testing.T) {
+	h := newHarness(t)
+	h.login()
+	content := strings.Repeat("a", 32768)
+	file := filepath.Join(t.TempDir(), "cloud.yaml")
+	os.WriteFile(file, []byte(content), 0o600)
+
+	err := h.run("vm", "create", "web-2", "--cluster", "local-mac", "--network", "app-net",
+		"--template", "tpl-ubuntu", "--size", "m", "--user-data", file)
+
+	if err != nil {
+		t.Fatalf("vm create: %v", err)
+	}
+	if got := lastWrite(t, h).Body["userData"]; got != content {
+		t.Fatalf("userData length = %d, want %d", len(got.(string)), len(content))
+	}
+}
+
+func TestVmCreate_UserDataFile_OneByteOverTheLimit_SaysSo_AndCreatesNothing(t *testing.T) {
+	h := newHarness(t)
+	h.login()
+	file := filepath.Join(t.TempDir(), "cloud.yaml")
+	os.WriteFile(file, []byte(strings.Repeat("a", 32769)), 0o600)
+
+	err := h.run("vm", "create", "web-2", "--cluster", "local-mac", "--network", "app-net",
+		"--template", "tpl-ubuntu", "--size", "m", "--user-data", file)
+
+	if err == nil || !strings.Contains(err.Error(), file) || !strings.Contains(err.Error(), "32769") || !strings.Contains(err.Error(), "32768") {
+		t.Fatalf("err = %v", err)
+	}
+	if len(h.api.writes) != 0 {
+		t.Fatalf("writes = %+v", h.api.writes)
+	}
+}
+
+// The limit is bytes, not runes: a multi-byte character must not let a file past the byte limit through.
+func TestVmCreate_UserDataFile_OverTheLimitByBytes_NotByRunes_SaysSo_AndCreatesNothing(t *testing.T) {
+	h := newHarness(t)
+	h.login()
+	content := strings.Repeat("ệ", 10923) // 3 bytes each = 32769 bytes, 10923 runes
+	if len(content) != 32769 {
+		t.Fatalf("fixture is %d bytes, want 32769", len(content))
+	}
+	file := filepath.Join(t.TempDir(), "cloud.yaml")
+	os.WriteFile(file, []byte(content), 0o600)
+
+	err := h.run("vm", "create", "web-2", "--cluster", "local-mac", "--network", "app-net",
+		"--template", "tpl-ubuntu", "--size", "m", "--user-data", file)
+
+	if err == nil || !strings.Contains(err.Error(), "32769") {
+		t.Fatalf("err = %v", err)
+	}
+	if len(h.api.writes) != 0 {
+		t.Fatalf("writes = %+v", h.api.writes)
+	}
+}
+
+func TestVmCreate_UserDataFile_NotValidUtf8_SaysSo_AndCreatesNothing(t *testing.T) {
+	h := newHarness(t)
+	h.login()
+	file := filepath.Join(t.TempDir(), "cloud.yaml")
+	os.WriteFile(file, []byte{0xff, 0xfe, 0x00}, 0o600)
+
+	err := h.run("vm", "create", "web-2", "--cluster", "local-mac", "--network", "app-net",
+		"--template", "tpl-ubuntu", "--size", "m", "--user-data", file)
+
+	if err == nil || !strings.Contains(err.Error(), "not valid UTF-8") {
+		t.Fatalf("err = %v", err)
+	}
+	if len(h.api.writes) != 0 {
+		t.Fatalf("writes = %+v", h.api.writes)
+	}
+}
+
 func TestVmCreate_ConsolePasswordOnTheCommandLine_IsRefused_AndCreatesNothing(t *testing.T) {
 	h := newHarness(t)
 	h.login()
